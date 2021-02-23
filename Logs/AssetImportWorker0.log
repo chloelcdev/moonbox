@@ -93,3 +93,64 @@ Received Import Request.
 Start importing Assets/New Terrain 1.asset using Guid(181e004f1142a9c48bd8bb53187aa5e4) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: 'e25885cbac9279592c36e3e124e79cb4') in 0.019837 seconds
   Import took 0.026978 seconds .
 
+========================================================================
+Received Prepare
+Registering precompiled user dll's ...
+Registered in 0.006838 seconds.
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+Native extension for LinuxStandalone target not found
+Native extension for WindowsStandalone target not found
+Refreshing native plugins compatible for Editor in 0.88 ms, found 5 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Invoked RoslynAnalysisRunner static constructor.
+RoslynAnalysisRunner will not be running.
+RoslynAnalysisRunner has terminated.
+Mono: successfully reloaded assembly
+- Completed reload, in  1.321 seconds
+Platform modules already initialized, skipping
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Shader 'Universal Render Pipeline/Particles/Lit': fallback shader 'Universal Render Pipeline/Particles/SimpleLit' not found
+Refreshing native plugins compatible for Editor in 0.88 ms, found 5 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Unloading 3410 Unused Serialized files (Serialized files now loaded: 0)
+System memory in use before: 151.3 MB.
+System memory in use after: 150.1 MB.
+
+Unloading 43 unused Assets to reduce memory usage. Loaded Objects now: 3954.
+Total: 7.295800 ms (FindLiveObjects: 0.346900 ms CreateObjectMapping: 0.164000 ms MarkObjects: 4.551100 ms  DeleteObjects: 2.232000 ms)
+
+========================================================================
+Received Import Request.
+  Time since last request: 2333.495979 seconds.
+  path: Assets/XR
+  artifactKey: Guid(77336c9d7778d45469f45daf716bffa7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/XR using Guid(77336c9d7778d45469f45daf716bffa7) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '50ad0b472afe22ecf87c666ad3febefa') in 0.011616 seconds
+  Import took 0.019103 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 1.466305 seconds.
+  path: Assets/XR/Loaders
+  artifactKey: Guid(a5dc45276e232cb40afb129458979c65) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/XR/Loaders using Guid(a5dc45276e232cb40afb129458979c65) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '87160389023b2a39ae4e4c960ad9d5a7') in 0.006423 seconds
+  Import took 0.013688 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.092824 seconds.
+  path: Assets/XR/Loaders/Open XR Loader No Pre Init.asset
+  artifactKey: Guid(ab66f20b3c1d0c74289b33fb0c7dfada) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/XR/Loaders/Open XR Loader No Pre Init.asset using Guid(ab66f20b3c1d0c74289b33fb0c7dfada) Importer(815301076,1909f56bfc062723c751e8b465ee728b) [XR] Error loading subsystem: Display (1) (header mismatch?)
+ -> (artifact id: '8a75c750761fc1cd4e17b469171ed659') in 0.017036 seconds
+  Import took 0.023824 seconds .
+
+========================================================================
+Received Import Request.
+  Time since last request: 0.000394 seconds.
+  path: Assets/XR/Loaders/Open XR Loader.asset
+  artifactKey: Guid(097a836d5e634b545953f8e815e7d569) Importer(815301076,1909f56bfc062723c751e8b465ee728b)
+Start importing Assets/XR/Loaders/Open XR Loader.asset using Guid(097a836d5e634b545953f8e815e7d569) Importer(815301076,1909f56bfc062723c751e8b465ee728b)  -> (artifact id: '244eb0a27b2f722f1e50a3c9841ae84d') in 0.006290 seconds
+  Import took 0.012526 seconds .
+
+AssetImportWorkerClient::OnTransportError - code=2 error=End of file
