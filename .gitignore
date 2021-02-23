@@ -1,11 +1,5 @@
 # Ignore directories under Assets
 /[Aa]ssets/*/
-# Recursively allow files under Github-sync
-!/[Aa]ssets/Github-Sync**
-# Recursively allow files under Bearded Man Studios Inc
-!/[Aa]ssets/Bearded Man Studios Inc**
-# Recursively allow files under the rootmotion plugin
-!/[Aa]ssets/Plugins**
 
 # This .gitignore file should be placed at the root of your Unity project directory
 #
