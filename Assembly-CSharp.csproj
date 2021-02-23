@@ -22,7 +22,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>Temp\Bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE;UNITY_2020_2_5;UNITY_2020_2;UNITY_2020;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER;UNITY_5_6_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2017_2_OR_NEWER;UNITY_2017_3_OR_NEWER;UNITY_2017_4_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2018_2_OR_NEWER;UNITY_2018_3_OR_NEWER;UNITY_2018_4_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_INCLUDE_TESTS;USE_SEARCH_ENGINE_API;SCENE_TEMPLATE_MODULE;ENABLE_AR;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_EVENT_QUEUE;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_TEXTURE_STREAMING;ENABLE_VIRTUALTEXTURING;ENABLE_UNET;ENABLE_LZMA;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_UNITYWEBREQUEST;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_COLLAB;ENABLE_CLOUD_SERVICES_COLLAB_SOFTLOCKS;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_HUB_LICENSE;ENABLE_WEBSOCKET_CLIENT;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;INCLUDE_DYNAMIC_GI;ENABLE_MONO_BDWGC;ENABLE_SCRIPTING_GC_WBARRIERS;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_VIDEO;PLATFORM_STANDALONE;PLATFORM_STANDALONE_WIN;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_OUT_OF_PROCESS_CRASH_HANDLER;ENABLE_CLUSTER_SYNC;ENABLE_CLUSTERINPUT;PLATFORM_UPDATES_TIME_OUTSIDE_OF_PLAYER_LOOP;GFXDEVICE_WAITFOREVENT_MESSAGEPUMP;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;NET_STANDARD_2_0;ENABLE_PROFILER;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_BURST_AOT;UNITY_TEAM_LICENSE;ENABLE_CUSTOM_RENDER_TEXTURE;ENABLE_DIRECTOR;ENABLE_LOCALIZATION;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_TILEMAP;ENABLE_TIMELINE;ENABLE_LEGACY_INPUT_MANAGER;UNITY_POST_PROCESSING_STACK_V2;CSHARP_7_OR_LATER;CSHARP_7_3_OR_NEWER</DefineConstants>
+    <DefineConstants>DEBUG;TRACE;UNITY_2020_2_5;UNITY_2020_2;UNITY_2020;UNITY_5_3_OR_NEWER;UNITY_5_4_OR_NEWER;UNITY_5_5_OR_NEWER;UNITY_5_6_OR_NEWER;UNITY_2017_1_OR_NEWER;UNITY_2017_2_OR_NEWER;UNITY_2017_3_OR_NEWER;UNITY_2017_4_OR_NEWER;UNITY_2018_1_OR_NEWER;UNITY_2018_2_OR_NEWER;UNITY_2018_3_OR_NEWER;UNITY_2018_4_OR_NEWER;UNITY_2019_1_OR_NEWER;UNITY_2019_2_OR_NEWER;UNITY_2019_3_OR_NEWER;UNITY_2019_4_OR_NEWER;UNITY_2020_1_OR_NEWER;UNITY_2020_2_OR_NEWER;UNITY_INCLUDE_TESTS;USE_SEARCH_ENGINE_API;SCENE_TEMPLATE_MODULE;ENABLE_AR;ENABLE_AUDIO;ENABLE_CACHING;ENABLE_CLOTH;ENABLE_EVENT_QUEUE;ENABLE_MICROPHONE;ENABLE_MULTIPLE_DISPLAYS;ENABLE_PHYSICS;ENABLE_TEXTURE_STREAMING;ENABLE_VIRTUALTEXTURING;ENABLE_UNET;ENABLE_LZMA;ENABLE_UNITYEVENTS;ENABLE_VR;ENABLE_WEBCAM;ENABLE_UNITYWEBREQUEST;ENABLE_WWW;ENABLE_CLOUD_SERVICES;ENABLE_CLOUD_SERVICES_COLLAB;ENABLE_CLOUD_SERVICES_COLLAB_SOFTLOCKS;ENABLE_CLOUD_SERVICES_ADS;ENABLE_CLOUD_SERVICES_USE_WEBREQUEST;ENABLE_CLOUD_SERVICES_CRASH_REPORTING;ENABLE_CLOUD_SERVICES_PURCHASING;ENABLE_CLOUD_SERVICES_ANALYTICS;ENABLE_CLOUD_SERVICES_UNET;ENABLE_CLOUD_SERVICES_BUILD;ENABLE_CLOUD_LICENSE;ENABLE_EDITOR_HUB_LICENSE;ENABLE_WEBSOCKET_CLIENT;ENABLE_DIRECTOR_AUDIO;ENABLE_DIRECTOR_TEXTURE;ENABLE_MANAGED_JOBS;ENABLE_MANAGED_TRANSFORM_JOBS;ENABLE_MANAGED_ANIMATION_JOBS;ENABLE_MANAGED_AUDIO_JOBS;INCLUDE_DYNAMIC_GI;ENABLE_MONO_BDWGC;ENABLE_SCRIPTING_GC_WBARRIERS;PLATFORM_SUPPORTS_MONO;RENDER_SOFTWARE_CURSOR;ENABLE_VIDEO;PLATFORM_STANDALONE;PLATFORM_STANDALONE_WIN;UNITY_STANDALONE_WIN;UNITY_STANDALONE;ENABLE_RUNTIME_GI;ENABLE_MOVIES;ENABLE_NETWORK;ENABLE_CRUNCH_TEXTURE_COMPRESSION;ENABLE_OUT_OF_PROCESS_CRASH_HANDLER;ENABLE_CLUSTER_SYNC;ENABLE_CLUSTERINPUT;PLATFORM_UPDATES_TIME_OUTSIDE_OF_PLAYER_LOOP;GFXDEVICE_WAITFOREVENT_MESSAGEPUMP;ENABLE_WEBSOCKET_HOST;ENABLE_MONO;NET_STANDARD_2_0;ENABLE_PROFILER;UNITY_ASSERTIONS;UNITY_EDITOR;UNITY_EDITOR_64;UNITY_EDITOR_WIN;ENABLE_UNITY_COLLECTIONS_CHECKS;ENABLE_BURST_AOT;UNITY_TEAM_LICENSE;ENABLE_CUSTOM_RENDER_TEXTURE;ENABLE_DIRECTOR;ENABLE_LOCALIZATION;ENABLE_SPRITES;ENABLE_TERRAIN;ENABLE_TILEMAP;ENABLE_TIMELINE;ENABLE_INPUT_SYSTEM;UNITY_POST_PROCESSING_STACK_V2;CSHARP_7_OR_LATER;CSHARP_7_3_OR_NEWER</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <NoWarn>0169</NoWarn>
@@ -56,55 +56,57 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\SimpleCameraController.cs" />
-    <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\RaycastGroundDetection.cs" />
+    <Compile Include="Assets\QuickOutline\Scripts\Outline.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\CharacterController2D.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Components\CrouchingModelScaler.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\BoxGroundDetection.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Controllers\BaseFirstPersonController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\8 - Orient Towards Ground Normals\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\BaseGroundDetection.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\CustomCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\GroundHit.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\10 - Wall Grab and Wall Jump\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\5 - Crouching (FPS)\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\GroundDetection.cs" />
     <Compile Include="Assets\Easy Character Movement\Scripts\Controllers\BaseCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Controllers\BaseAgentController.cs" />
+    <Compile Include="Assets\SimpleCameraController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\10 - Wall Grab and Wall Jump\Scripts\OneWayPlatform.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\2 - Custom Input\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\7 - Toggle Gravity Direction\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\12 - Swimming\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\RaycastGroundDetection.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Helpers\RootMotionController.cs" />
+    <Compile Include="Assets\Lobby\Scripts\DraggablePanel.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanAgentController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Components\MouseLook.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Common\Extensions.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\15 - Ladder Climbing\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\6 - Fall Damage\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\DemoController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\11 - Flying\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Common\Utils.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Components\KinematicMove.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\OrientModelToGround.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\14 - Visualize walkable ground\Scripts\MeshAnalysis.cs" />
+    <Compile Include="Assets\TutorialInfo\Scripts\Readme.cs" />
+    <Compile Include="Assets\Easy Character Movement\Scripts\Components\CharacterMovement.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\15 - Ladder Climbing\Scripts\Ladder.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\13 - Over The Shoulder Camera Movement\Scripts\MyCharacterController.cs" />
     <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\CustomAgentController.cs" />
     <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Components\KinematicRotate.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\8 - Orient Towards Ground Normals\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\OrientModelToGround.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\13 - Over The Shoulder Camera Movement\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Common\Extensions.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\CharacterController2D.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\BaseGroundDetection.cs" />
     <Compile Include="Assets\Easy Character Movement\Walkthrough\13 - Over The Shoulder Camera Movement\Scripts\OverShoulderCameraController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\2 - Custom Input\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanPlatformerController.cs" />
     <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\FPS_CustomController.cs" />
     <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\FollowCameraController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Helpers\RootMotionController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\7 - Toggle Gravity Direction\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\15 - Ladder Climbing\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\5 - Crouching (FPS)\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\3 - Movement Relative To Camera\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Components\CharacterMovement.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Components\CrouchingModelScaler.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\GroundDetection.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\10 - Wall Grab and Wall Jump\Scripts\OneWayPlatform.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\1 - Custom Character Controller\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Components\MouseLook.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\CustomCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\14 - Visualize walkable ground\Scripts\MeshAnalysis.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\11 - Flying\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanCharacterController.cs" />
     <Compile Include="Assets\Easy Character Movement\Scripts\Common\MathLibrary.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\12 - Swimming\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Common\Utils.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Components\GroundDetection\GroundHit.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\6 - Fall Damage\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\10 - Wall Grab and Wall Jump\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\BoxGroundDetection.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanAgentController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanPlatformerController.cs" />
     <Compile Include="Assets\Easy Character Movement\Walkthrough\13 - Over The Shoulder Camera Movement\Scripts\PreventCameraWallClip.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\4 - Custom Rotation (tank like rotation)\Scripts\MyCharacterController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Components\KinematicMove.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Controllers\BaseAgentController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\EthanCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\1 - Custom Character Controller\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Lobby\Scripts\EventSystemChecker.cs" />
     <Compile Include="Assets\Easy Character Movement\Scripts\@Obsolete\SphereGroundDetection.cs" />
-    <Compile Include="Assets\Easy Character Movement\Walkthrough\15 - Ladder Climbing\Scripts\Ladder.cs" />
-    <Compile Include="Assets\Easy Character Movement\Scripts\Controllers\BaseFirstPersonController.cs" />
-    <Compile Include="Assets\Easy Character Movement\Examples\Scripts\Controllers\DemoController.cs" />
-    <Compile Include="Assets\QuickOutline\Scripts\Outline.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\3 - Movement Relative To Camera\Scripts\MyCharacterController.cs" />
+    <Compile Include="Assets\Easy Character Movement\Walkthrough\4 - Custom Rotation (tank like rotation)\Scripts\MyCharacterController.cs" />
   </ItemGroup>
   <ItemGroup>
      <None Include="Assets\MLAPI\Lib\MLAPI.xml" />
@@ -112,14 +114,18 @@
      <None Include="Assets\QuickOutline\Resources\Shaders\OutlineMask.shader" />
      <None Include="Assets\JsonDotNet\link.xml" />
      <None Include="Assets\JsonDotNet\Assemblies\Windows\Newtonsoft.Json.XML" />
+     <None Include="Assets\Lobby\Instruction.txt" />
      <None Include="Assets\JsonDotNet\Assemblies\Standalone\Newtonsoft.Json.XML" />
      <None Include="Assets\JsonDotNet\Assemblies\Standalone\Newtonsoft.Json.dll" />
+     <None Include="Assets\Lobby\Documentation.txt" />
      <None Include="Assets\Easy Character Movement\README.txt" />
      <None Include="Assets\QuickOutline\Readme.txt" />
+     <None Include="Assets\NetworkLobby_Third-PartyNotice.txt" />
      <None Include="Assets\JsonDotNet\Assemblies\AOT\Newtonsoft.Json.dll" />
      <None Include="Assets\JsonDotNet\Assemblies\AOT\Newtonsoft.Json.XML" />
      <None Include="Assets\JsonDotNet\Assemblies\Windows\Newtonsoft.Json.dll" />
      <None Include="Assets\QuickOutline\Resources\Shaders\OutlineFill.shader" />
+     <None Include="Assets\Fonts\OpenSans\FontLicense.txt" />
     <Reference Include="UnityEngine">
       <HintPath>A:\Unity Editors\2020.2.5f1\Editor\Data\Managed\UnityEngine\UnityEngine.dll</HintPath>
     </Reference>
@@ -342,14 +348,14 @@
     <Reference Include="UnityEditor.UnityConnectModule">
       <HintPath>A:\Unity Editors\2020.2.5f1\Editor\Data\Managed\UnityEngine\UnityEditor.UnityConnectModule.dll</HintPath>
     </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>Assets\JsonDotNet\Assemblies\Standalone\Newtonsoft.Json.dll</HintPath>
+    </Reference>
     <Reference Include="MLAPI">
       <HintPath>Assets\MLAPI\Lib\MLAPI.dll</HintPath>
     </Reference>
     <Reference Include="DOTween">
       <HintPath>Assets\Plugins\Demigiant\DOTween\DOTween.dll</HintPath>
-    </Reference>
-    <Reference Include="Newtonsoft.Json">
-      <HintPath>Assets\JsonDotNet\Assemblies\Standalone\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="netstandard">
       <HintPath>A:\Unity Editors\2020.2.5f1\Editor\Data\NetStandard\ref\2.0.0\netstandard.dll</HintPath>
@@ -738,9 +744,6 @@
     <Reference Include="Unity.Postprocessing.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.Postprocessing.Editor.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEditor.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEditor.UI.dll</HintPath>
-    </Reference>
     <Reference Include="Unity.InputSystem">
       <HintPath>Library\ScriptAssemblies\Unity.InputSystem.dll</HintPath>
     </Reference>
@@ -749,9 +752,6 @@
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
       <HintPath>Library\ScriptAssemblies\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI">
-      <HintPath>Library\ScriptAssemblies\UnityEngine.UI.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.SpatialTracking">
       <HintPath>Library\ScriptAssemblies\UnityEngine.SpatialTracking.dll</HintPath>
@@ -810,6 +810,15 @@
     <Reference Include="Unity.XR.OpenXR.Features.RuntimeDebugger.Editor">
       <HintPath>Library\ScriptAssemblies\Unity.XR.OpenXR.Features.RuntimeDebugger.Editor.dll</HintPath>
     </Reference>
+    <Reference Include="Unity.Sysroot.Linux_x86_64">
+      <HintPath>Library\ScriptAssemblies\Unity.Sysroot.Linux_x86_64.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Toolchain.Win-x86_64-Linux-x86_64">
+      <HintPath>Library\ScriptAssemblies\Unity.Toolchain.Win-x86_64-Linux-x86_64.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.SysrootPackage.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.SysrootPackage.Editor.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="Assembly-CSharp-firstpass.csproj">
@@ -819,6 +828,18 @@
     <ProjectReference Include="Moonbox.csproj">
       <Project>{BA99F976-4701-B7BB-C504-AC30B2AF13F1}</Project>
       <Name>Moonbox</Name>
+    </ProjectReference>
+    <ProjectReference Include="UnityEditor.UI.csproj">
+      <Project>{F05F2D59-3065-355C-90EE-B8227C558FCC}</Project>
+      <Name>UnityEditor.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="UnityEngine.UI.csproj">
+      <Project>{6AAC8C41-C29E-F759-2D75-59B2C55899DA}</Project>
+      <Name>UnityEngine.UI</Name>
+    </ProjectReference>
+    <ProjectReference Include="DOTween.Modules.csproj">
+      <Project>{6BBB06BD-9BEB-8082-814D-02A706A3B50F}</Project>
+      <Name>DOTween.Modules</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

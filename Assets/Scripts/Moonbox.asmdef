@@ -1,3 +1,16 @@
 {
-	"name": "Moonbox"
+    "name": "Moonbox",
+    "rootNamespace": "",
+    "references": [
+        "GUID:bbd29eaeba4f5404b9297294be3f6941"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
 }
