@@ -2,7 +2,8 @@
     "name": "Moonbox",
     "rootNamespace": "",
     "references": [
-        "GUID:bbd29eaeba4f5404b9297294be3f6941"
+        "GUID:bbd29eaeba4f5404b9297294be3f6941",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

@@ -56,7 +56,9 @@
     <Analyzer Include="C:\Program Files (x86)\Microsoft Visual Studio Tools for Unity\16.0\Analyzers\Microsoft.Unity.Analyzers.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Scripts\GameObjectReferencer.cs" />
     <Compile Include="Assets\Scripts\DontDestroyOnLoad.cs" />
+    <Compile Include="Assets\Scripts\Networking\Lobby\LobbyManager.cs" />
     <None Include="Assets\Scripts\Moonbox.asmdef" />
     <Reference Include="UnityEngine">
       <HintPath>A:/Unity Editors/2020.2.5f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
@@ -651,6 +653,9 @@
     </Reference>
     <Reference Include="System.Xml.Serialization">
       <HintPath>A:/Unity Editors/2020.2.5f1/Editor/Data/NetStandard/compat/2.0.0/shims/netfx/System.Xml.Serialization.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.TextMeshPro">
+      <HintPath>S:/Unity Projects/moonbox/moonbox/Library/ScriptAssemblies/Unity.TextMeshPro.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
