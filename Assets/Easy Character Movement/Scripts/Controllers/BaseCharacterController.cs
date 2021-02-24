@@ -1,6 +1,7 @@
 ﻿using ECM.Components;
 using ECM.Helpers;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.Serialization;
 
 namespace ECM.Controllers
@@ -839,7 +840,7 @@ namespace ECM.Controllers
             // Toggle pause / resume.
             // By default, will restore character's velocity on resume (eg: restoreVelocityOnResume = true)
 
-            if (Input.GetKeyDown(KeyCode.P))
+            if (Keyboard.current.pKey.wasPressedThisFrame)
                 pause = !pause;
 
             // Handle user input
