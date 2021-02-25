@@ -137,6 +137,7 @@ GameObject:
   - component: {fileID: 150677706}
   - component: {fileID: 150677710}
   - component: {fileID: 150677711}
+  - component: {fileID: 150677712}
   m_Layer: 5
   m_Name: Main UI Canvas
   m_TagString: Untagged
@@ -251,10 +252,10 @@ MonoBehaviour:
     NetworkedPrefabs:
     - Prefab: {fileID: 4237206755132902935, guid: 6af9537589a046c4dbb03f8b2a81c31e,
         type: 3}
-      PlayerPrefab: 1
+      PlayerPrefab: 0
     PlayerPrefabHash:
       Value: 0
-    CreatePlayerPrefab: 1
+    CreatePlayerPrefab: 0
     ReceiveTickrate: 64
     MaxReceiveEventsPerTickRate: 500
     EventTickrate: 64
@@ -303,6 +304,19 @@ MonoBehaviour:
   UseMLAPIRelay: 0
   MLAPIRelayAddress: 184.72.104.138
   MLAPIRelayPort: 8888
+--- !u!114 &150677712
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 150677705}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8043307ec96926546832ebda3102e432, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  Lobby: {fileID: 809011245}
 --- !u!1 &808977397
 GameObject:
   m_ObjectHideFlags: 0
@@ -619,7 +633,6 @@ GameObject:
   - component: {fileID: 829203305}
   - component: {fileID: 829008097}
   - component: {fileID: 815056619}
-  - component: {fileID: 815116229}
   m_Layer: 5
   m_Name: LobbyPanel
   m_TagString: Untagged
@@ -657,26 +670,13 @@ GameObject:
   - component: {fileID: 829333807}
   - component: {fileID: 815013951}
   - component: {fileID: 815069527}
-  - component: {fileID: 809011246}
   m_Layer: 5
-  m_Name: LobbyManager
+  m_Name: Lobby
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &809011246
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809011245}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8043307ec96926546832ebda3102e432, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &809012845
 GameObject:
   m_ObjectHideFlags: 0
@@ -791,7 +791,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 829221731}
-  - component: {fileID: 815022549}
   - component: {fileID: 829008343}
   - component: {fileID: 815034047}
   m_Layer: 5
@@ -1051,7 +1050,6 @@ GameObject:
   m_Component:
   - component: {fileID: 829288585}
   - component: {fileID: 829014715}
-  - component: {fileID: 815133267}
   m_Layer: 5
   m_Name: ServerListPanel
   m_TagString: Untagged
@@ -1234,7 +1232,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 829181085}
-  - component: {fileID: 815071153}
   - component: {fileID: 829345081}
   - component: {fileID: 815133441}
   m_Layer: 5
@@ -1575,7 +1572,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 809011246}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: LobbyManager, Moonbox
         m_MethodName: JoinServer
         m_Mode: 1
@@ -1820,7 +1817,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 815133267}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: 
         m_MethodName: ChangePage
         m_Mode: 3
@@ -1972,18 +1969,6 @@ MonoBehaviour:
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
   m_PixelsPerUnitMultiplier: 1
---- !u!114 &815022549
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809018017}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1d17c9f1a79cf43479d9ac49a7e77a12, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &815023243
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2048,7 +2033,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 809011246}
+      - m_Target: {fileID: 150677712}
         m_TargetAssemblyTypeName: LobbyManager, Moonbox
         m_MethodName: HostAndPlay
         m_Mode: 1
@@ -3377,18 +3362,6 @@ MonoBehaviour:
     m_VerticalOverflow: 1
     m_LineSpacing: 1
   m_Text: OR
---- !u!114 &815071153
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809176775}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ccb58ed657934fa4dacaa6afdf48bffc, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &815104221
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3506,7 +3479,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 809011246}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: LobbyManager, Moonbox
         m_MethodName: HostAndPlay
         m_Mode: 1
@@ -3676,18 +3649,6 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls: []
---- !u!114 &815116229
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809004649}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5156c0b327b8dd45a725d337f49b61c, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &815120683
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4061,7 +4022,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 809011246}
+      - m_Target: {fileID: 150677712}
         m_TargetAssemblyTypeName: LobbyManager, Moonbox
         m_MethodName: HostServer
         m_Mode: 1
@@ -4073,18 +4034,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &815133267
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 809038809}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2fc8e7df4caaef14e97fb5dbb4825c5a, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &815133441
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4215,7 +4164,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 815133267}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: 
         m_MethodName: ChangePage
         m_Mode: 3
@@ -4379,6 +4328,7 @@ GameObject:
   m_Component:
   - component: {fileID: 828775428}
   - component: {fileID: 828775427}
+  - component: {fileID: 828775429}
   m_Layer: 0
   m_Name: Directional Light
   m_TagString: Untagged
@@ -4462,6 +4412,18 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &828775429
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 828775426}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc5562246955d542a557b517952af31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!222 &828900101
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -6555,6 +6517,7 @@ GameObject:
   - component: {fileID: 2109524923}
   - component: {fileID: 2109524922}
   - component: {fileID: 2109524921}
+  - component: {fileID: 2109524924}
   m_Layer: 0
   m_Name: Main Camera
   m_TagString: MainCamera
@@ -6627,3 +6590,15 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2109524924
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2109524920}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1bc5562246955d542a557b517952af31, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
