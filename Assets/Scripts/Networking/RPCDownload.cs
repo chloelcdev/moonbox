@@ -102,56 +102,53 @@ public class RPCDownload
                         // Read may return anything from 0 to numBytesToRead.
                         int n = fs.Read(fileChunk, numBytesRead, _fileChunkSize);
 
-                        foreach(byte[] netChunk in Split(fileChunk, _netChunkSize))
-                        {
-                            byte[] filename = System.Text.Encoding.Unicode.GetBytes(_path);
 
-                            //uint32 to describe the length 
-                            byte[] uint32_filename_length_in_bytes = BitConverter.GetBytes( (UInt32)filename.Length );
-                            
-                            using (MemoryStream dataStream = new MemoryStream(uint32_filename_length_in_bytes))
+                        // initial packet:  int32_filename_length_in_bytes | filename | fixed_length_hash | fileLengthInBytes
+
+                        using (PooledBitStream bitStream = PooledBitStream.Get()) {
+                            using (PooledBitWriter writer = PooledBitWriter.Get(bitStream))
                             {
-                                dataStream.Write(filename, 4, filename.Length);
-                                int offset = 4 + filename.Length;
+                                // int32_filename_length_in_bytes
+                                writer.WriteInt32(_path.Length);
 
+                                // filename
+                                writer.WriteCharArray(_path.ToCharArray(), _path.Length);
 
+                                // fixed_length_hash
+                                byte[] fixed_length_hash = sha256(BitConverter.GetBytes(0));
+                                writer.WriteByteArray(fixed_length_hash, 256);
 
-
-                                // if first packet
-                                // initial packet:  uint32_filename_length_in_bytes | filename | fixed_length_hash | fileLengthInBytes
-
-                                byte[] fixed_length_hash = sha256(netChunk);
-                                byte[] file_length_in_bytes = BitConverter.GetBytes(fs.Length);
-
-
-                                dataStream.Write(fixed_length_hash, offset, fixed_length_hash.Length);
-                                offset += fixed_length_hash.Length;
-
-                                dataStream.Write(file_length_in_bytes, offset, file_length_in_bytes.Length);
-
-                                // end if first packet
-
-
-
-
-
-
-                                // if not first packet
-                                // subsequent packets: filename_length_in_bytes | filename | partialOrWholeFileData_doesntMatterWho
-
-                                dataStream.Write(netChunk, offset, netChunk.Length);
-
-                                // end if not first packet
-
-
-
-
-
-                                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, dataStream, "MLAPI_INTERNAL"); //Channel is optional extra argument
+                                // fileLengthInBytes
+                                writer.WriteInt64(fs.Length);
                             }
+
+                            // MLAPI_INTERNAL is an ordered channel
+                            CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
                         }
 
-                        // send fileChunk
+                        // subsequent packets: filename_length_in_bytes | filename | partialOrWholeFileData_doesntMatterWho
+
+                        foreach (byte[] netChunk in Split(fileChunk, _netChunkSize))
+                        {
+
+                            using (PooledBitStream bitStream = PooledBitStream.Get())
+                            {
+                                using (PooledBitWriter writer = PooledBitWriter.Get(bitStream))
+                                {
+                                    // int32_filename_length_in_bytes
+                                    writer.WriteInt32(_path.Length);
+
+                                    // filename
+                                    writer.WriteCharArray(_path.ToCharArray(), _path.Length);
+
+                                    writer.WriteByteArray(netChunk, netChunk.Length);
+                                }
+
+
+                                // MLAPI_INTERNAL is an ordered channel
+                                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+                            }
+                        }
 
                         // Break when the end of the file is reached.
                         if (n == 0) break;
