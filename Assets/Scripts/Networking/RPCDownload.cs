@@ -104,27 +104,49 @@ public class RPCDownload
 
                         foreach(byte[] netChunk in Split(fileChunk, _netChunkSize))
                         {
-
-                            //uint32 to describe the length 
-                            UInt32 pathBytes = (UInt32)System.Text.Encoding.Unicode.GetByteCount(_path);
-                            byte[] uint32_filename_length_in_bytes = BitConverter.GetBytes(pathBytes);
                             byte[] filename = System.Text.Encoding.Unicode.GetBytes(_path);
 
-
-                            // first packet 
-                            byte[] fixed_length_hash = sha256(netChunk);
-                            byte[] file_length_in_bytes = BitConverter.GetBytes(fs.Length);
-                            // initial packet:  uint32_filename_length_in_bytes | filename | fixed_length_hash | fileLengthInBytes
-
-
-
-                            //subsequent packets: filename_length_in_bytes | filename | partialOrWholeFileData_doesntMatterWho
-
-
-                            using (MemoryStream dataStream = new MemoryStream(BitConverter.GetBytes(pathBytes)))
+                            //uint32 to describe the length 
+                            byte[] uint32_filename_length_in_bytes = BitConverter.GetBytes( (UInt32)filename.Length );
+                            
+                            using (MemoryStream dataStream = new MemoryStream(uint32_filename_length_in_bytes))
                             {
-                               
-                                dataStream.Write(netChunk, 4, netChunk.Length);
+                                dataStream.Write(filename, 4, filename.Length);
+                                int offset = 4 + filename.Length;
+
+
+
+
+                                // if first packet
+                                // initial packet:  uint32_filename_length_in_bytes | filename | fixed_length_hash | fileLengthInBytes
+
+                                byte[] fixed_length_hash = sha256(netChunk);
+                                byte[] file_length_in_bytes = BitConverter.GetBytes(fs.Length);
+
+
+                                dataStream.Write(fixed_length_hash, offset, fixed_length_hash.Length);
+                                offset += fixed_length_hash.Length;
+
+                                dataStream.Write(file_length_in_bytes, offset, file_length_in_bytes.Length);
+
+                                // end if first packet
+
+
+
+
+
+
+                                // if not first packet
+                                // subsequent packets: filename_length_in_bytes | filename | partialOrWholeFileData_doesntMatterWho
+
+                                dataStream.Write(netChunk, offset, netChunk.Length);
+
+                                // end if not first packet
+
+
+
+
+
                                 CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, dataStream, "MLAPI_INTERNAL"); //Channel is optional extra argument
                             }
                         }
