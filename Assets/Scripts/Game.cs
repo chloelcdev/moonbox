@@ -2,12 +2,21 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class NewBehaviourScript : MonoBehaviour
+public class Game : MonoBehaviour
 {
+    public static Game Instance;
+
+    void Awake()
+    {
+        Instance = this;
+    }
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        DontDestroyOnLoad(gameObject);
+
+        RPCDownload.ListenForRPCDownloads();
     }
 
     // Update is called once per frame
@@ -15,4 +24,8 @@ public class NewBehaviourScript : MonoBehaviour
     {
         
     }
+
+
+
+
 }

@@ -261,7 +261,7 @@ MonoBehaviour:
     EventTickrate: 64
     MaxObjectUpdatesPerTick: -1
     ClientConnectionBufferTimeout: 10
-    ConnectionApproval: 0
+    ConnectionApproval: 1
     ConnectionData: 
     SecondsHistory: 5
     EnableTimeResync: 0

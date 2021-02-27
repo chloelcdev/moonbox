@@ -120,6 +120,8 @@ public class LobbyManager : MonoBehaviour
         bool approve = true;
         bool createPlayerObject = true;
 
+        print("Client " + clientId + " is being approved.");
+
         // The prefab hash. Use null to use the default player prefab
         // If using this hash, replace "MyPrefabHashGenerator" with the name of a prefab added to the NetworkedPrefabs field of your NetworkingManager object in the scene
         ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("GamePlayer");
