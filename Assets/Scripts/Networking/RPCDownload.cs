@@ -111,7 +111,7 @@ public class RPCDownload
 
 
         // subsequent packets: 
-        // int32 fileID | byte[] filedata
+        // int32 fileID | byte[] filedata | bool isLastInPacket
 
         List<FileHeader> headers = new List<FileHeader>();
         Dictionary<string, int> fileIndex = new Dictionary<string, int>();
@@ -146,8 +146,10 @@ public class RPCDownload
         PooledBitStream bitStream = PooledBitStream.Get();
         PooledBitWriter writer = PooledBitWriter.Get(bitStream);
 
+        // fileCount
         writer.WriteInt32(headers.Count);
 
+        // downloadSize
         writer.WriteInt64(fullDownloadSize);
 
 
@@ -160,23 +162,30 @@ public class RPCDownload
 
             headersThisPacket++;
 
+            // fileID
             writer.WriteInt32(header.id);
+            
+            // filename
             writer.WriteString(path);
             
-
+            // hash
             writer.WriteByteArray(header.hash, 256);
 
-            writer.WriteUInt32(header.fileLength);
+            // fileLength
+            writer.WriteUInt32(header.fileSize);
 
-            
             if (headersThisPacket >= headersPerPacket || id == headers.Count-1)
             {
+                // isLastInPacket
                 writer.WriteBit(true);
 
                 headersThisPacket = 0;
-                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+
                 writer.Dispose();
                 bitStream.Dispose();
+
+                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+                
                 bitStream = PooledBitStream.Get();
                 writer = PooledBitWriter.Get(bitStream);
                 yield return new WaitForSeconds(1 / 14);
@@ -226,6 +235,9 @@ public class RPCDownload
 
                                     // filedata
                                     uWriter.WriteByteArray(netChunk, netChunk.Length);
+
+                                    // isLastInPacket
+                                    uWriter.WriteBit(n == 0);
                                 }
 
 
@@ -255,12 +267,19 @@ public class RPCDownload
     public FilesDownloadReceiveState receptionState = FilesDownloadReceiveState.Idle;
 
     
-    public int fileCount = 0;
-    public int headersReceived = 0;
-    public int filesReceived = 0;
+    public int numFilesNeeded = 0;
+    public int numHeadersReceived = 0;
+    public int numFilesReceived = 0;
+
     public long downloadSize = 0;
 
     public List<FileHeader> receivedHeaders = new List<FileHeader>();
+
+    /// <summary>
+    /// The last fileID received
+    /// </summary>
+    int previousFileID = -1;
+    public FileStream receptionFileStream;
 
     public void ReceiveFilesDownloadPiece(ulong _senderClientID, PooledBitStream _stream)
     {
@@ -270,7 +289,7 @@ public class RPCDownload
             case FilesDownloadReceiveState.Idle:
                 // receive first packet
                 using (PooledBitReader reader = PooledBitReader.Get(_stream)) {
-                    fileCount = reader.ReadInt32();
+                    numFilesNeeded = reader.ReadInt32();
                     downloadSize = reader.ReadInt64();
 
                     PullHeadersFromPacket(reader);
@@ -288,7 +307,41 @@ public class RPCDownload
             case FilesDownloadReceiveState.AwaitingAllFileData:
                 using (PooledBitReader reader = PooledBitReader.Get(_stream))
                 {
-                    // pull into file
+                    bool packetDataStored = false;
+                    while (!packetDataStored)
+                    {
+                        int id = reader.ReadInt32();
+                        byte[] data = reader.ReadByteArray(null);
+                        packetDataStored = reader.ReadBit();
+
+                        numFilesReceived++;
+                        bool isLastFile = numFilesReceived >= numFilesNeeded;
+
+
+                        if (id != previousFileID) {
+
+                            receptionFileStream.Dispose();
+
+                            if (!File.Exists(receivedHeaders[id].path))
+                            {
+                                File.Create(receivedHeaders[id].path, (int)receivedHeaders[id].fileSize);
+                            }
+
+                            receptionFileStream = File.Open(receivedHeaders[id].path, FileMode.Append);
+
+                            receptionFileStream.Write(data, 0, data.Length);
+                        }
+
+
+                        if (isLastFile)
+                        {
+                            receptionState = FilesDownloadReceiveState.Idle;
+                            break;
+                        }
+
+
+                        previousFileID = id;
+                    }
                 }
                 break;
         }
@@ -311,7 +364,7 @@ public class RPCDownload
             // if it's the last in the packet stop early
             if (isLastInPacket)
             {
-                receptionState = FilesDownloadReceiveState.AwaitingAllHeaders;
+                receptionState = FilesDownloadReceiveState.AwaitingAllFileData;
                 break;
             }
         }
@@ -338,13 +391,12 @@ public class RPCDownload
 
 public class FileHeader
 {
-
-    public FileHeader(int _id, string _path, byte[] _hash, uint _length)
+    public FileHeader(int _id, string _path, byte[] _hash, uint _size)
     {
         id = _id;
         path = _path;
         hash = _hash;
-        fileLength = _length;
+        fileSize = _size;
     }
 
     public int id;
@@ -354,7 +406,7 @@ public class FileHeader
     /// <summary>
     /// length of the file in bytes
     /// </summary>
-    public uint fileLength;
+    public uint fileSize;
 
 
 }
