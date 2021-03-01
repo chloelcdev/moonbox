@@ -181,13 +181,14 @@ public class RPCDownload
 
                 headersThisPacket = 0;
 
+                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+
                 writer.Dispose();
                 bitStream.Dispose();
 
-                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
-                
                 bitStream = PooledBitStream.Get();
                 writer = PooledBitWriter.Get(bitStream);
+
                 yield return new WaitForSeconds(1 / 14);
             }
             else
@@ -199,10 +200,13 @@ public class RPCDownload
 
         writer.Dispose();
         bitStream.Dispose();
-        
+
 
 
         // loop headers
+
+        bitStream = PooledBitStream.Get();
+        writer = PooledBitWriter.Get(bitStream);
 
         foreach (var header in headers)
         {
@@ -210,6 +214,7 @@ public class RPCDownload
             {
                 using (FileStream fs = File.Open(header.path, FileMode.Open))
                 {
+                    
                     // while loop pulled from fs.Read docs from microsoft, a little confusing to the glance but works and will be fast
 
                     int numBytesToRead = (int)fs.Length;
@@ -226,25 +231,30 @@ public class RPCDownload
                         foreach (byte[] netChunk in Split(fileChunk, _netChunkSize))
                         {
 
-                            using (PooledBitStream uBitStream = PooledBitStream.Get())
+                            // fileID
+                            writer.WriteInt32(header.id);
+
+                            // filedata
+                            writer.WriteByteArray(netChunk, netChunk.Length);
+
+                            // isLastInPacket
+                            bool isLastInPacket = bitStream.Length >= _netChunkSize;
+                            writer.WriteBit(isLastInPacket);
+
+                            if (isLastInPacket)
                             {
-                                using (PooledBitWriter uWriter = PooledBitWriter.Get(uBitStream))
-                                {
-                                    // fileID
-                                    uWriter.WriteInt32(header.id);
 
-                                    // filedata
-                                    uWriter.WriteByteArray(netChunk, netChunk.Length);
+                                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
 
-                                    // isLastInPacket
-                                    uWriter.WriteBit(n == 0);
-                                }
+                                writer.Dispose();
+                                bitStream.Dispose();
 
+                                bitStream = PooledBitStream.Get();
+                                writer = PooledBitWriter.Get(bitStream);
 
-                                // MLAPI_INTERNAL is an ordered channel
-                                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, uBitStream, "MLAPI_INTERNAL");
                                 yield return new WaitForSeconds(1 / 14);
                             }
+
                         }
 
                         // Break when the end of the file is reached.
@@ -255,6 +265,8 @@ public class RPCDownload
                     }
                 }
             }
+
+
         }
 
         downloadSendState = FilesDownloadSendState.AwaitingResponse;
