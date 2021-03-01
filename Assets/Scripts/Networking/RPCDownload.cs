@@ -14,29 +14,14 @@ public class RPCDownload
     public event Action<float> OnProgressUpdated;
     public event Action<byte[]> OnDownloadComplete;
     
-    public static void ListenForRPCDownloads()
+    public void ListenForRPCDownloads()
     {
         CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesDownloadPiece);
     }
 
-    
 
     public RPCDownload(string _messageName, ulong _clientId, byte[] _data) {
-        using (MemoryStream dataStream = new MemoryStream(_data))
-        {
-            
-            CustomMessagingManager.SendNamedMessage("gameDownload", _clientId, dataStream); //Channel is optional extra argument
-
-        }
-    }
-
-    
-    public RPCDownload SendGameDownload(ulong _clientID, byte[] _data)
-    {
-        RPCDownload dl = new RPCDownload("", _clientID, _data);
-        
-
-        return dl;
+        ListenForRPCDownloads();
     }
 
 
@@ -98,6 +83,7 @@ public class RPCDownload
         if (downloadSendState != FilesDownloadSendState.Idle)
         {
             Debug.LogWarning("Cannot start sending files while files are being sent, waiting for Idle state to begin");
+            yield break;
         }
 
         downloadSendState = FilesDownloadSendState.Sending;
@@ -293,7 +279,7 @@ public class RPCDownload
     int previousFileID = -1;
     public FileStream receptionFileStream;
 
-    public void ReceiveFilesDownloadPiece(ulong _senderClientID, PooledBitStream _stream)
+    public void ReceiveFilesDownloadPiece(ulong _senderClientID, Stream _stream)
     {
         
         switch(receptionState)
