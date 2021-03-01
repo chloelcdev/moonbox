@@ -16,7 +16,7 @@ public class Game : MonoBehaviour
     {
         DontDestroyOnLoad(gameObject);
 
-        RPCDownload.ListenForRPCDownloads();
+
     }
 
     // Update is called once per frame
