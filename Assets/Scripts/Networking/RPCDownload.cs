@@ -73,12 +73,15 @@ public class RPCDownload
 
     public static FilesDownloadSendState downloadSendState = FilesDownloadSendState.Idle;
 
+    List<FileHeader> headers = new List<FileHeader>();
+    Dictionary<string, int> fileIndex = new Dictionary<string, int>();
+
     /// <summary>
     /// this function splits FILES into MEMORY SAFE sized chunks and safely sends one before starting another
     /// 
     /// files receipient needs to receive the same number of headers with each header packet (packet 1 counts as a header packet)
     /// </summary>
-    public static IEnumerator SendFilesDownload(List<string> _paths, ulong _clientID, int _fileChunkSize = 1024*1024*50, int _netChunkSize = 1024*16)
+    public IEnumerator SendFilesDownload(List<string> _paths, ulong _clientID, int _fileChunkSize = 1024*1024*50, int _netChunkSize = 1024*16)
     {
         if (downloadSendState != FilesDownloadSendState.Idle)
         {
@@ -98,9 +101,6 @@ public class RPCDownload
 
         // subsequent packets: 
         // int32 fileID | byte[] filedata | bool isLastInPacket
-
-        List<FileHeader> headers = new List<FileHeader>();
-        Dictionary<string, int> fileIndex = new Dictionary<string, int>();
 
         long fullDownloadSize = 0;
 
