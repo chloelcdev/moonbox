@@ -117,7 +117,7 @@ public class RPCDownload
                     byte[] fileHash = sha256(fs);
 
                     fileIndex.Add(path, id);
-                    headers.Add(new FileHeader(id, path, fileHash, (uint)fs.Length));
+                    headers.Add(new FileHeader(id, path, fileHash, (long)fs.Length));
                     
 
                     fullDownloadSize += fs.Length;
@@ -158,7 +158,7 @@ public class RPCDownload
             writer.WriteByteArray(header.hash, 256);
 
             // fileLength
-            writer.WriteUInt32(header.fileSize);
+            writer.WriteInt64(header.fileSize);
 
             if (headersThisPacket >= headersPerPacket || id == headers.Count-1)
             {
@@ -352,7 +352,7 @@ public class RPCDownload
             int id = reader.ReadInt32();
             string filename = reader.ReadString().ToString();
             byte[] hash = reader.ReadByteArray(null, 256);
-            uint fileLength = reader.ReadUInt32();
+            long fileLength = reader.ReadInt64();
 
             bool isLastInPacket = reader.ReadBool();
 
@@ -389,7 +389,7 @@ public class RPCDownload
 
 public class FileHeader
 {
-    public FileHeader(int _id, string _path, byte[] _hash, uint _size)
+    public FileHeader(int _id, string _path, byte[] _hash, long _size)
     {
         id = _id;
         path = _path;
@@ -404,7 +404,7 @@ public class FileHeader
     /// <summary>
     /// length of the file in bytes
     /// </summary>
-    public uint fileSize;
+    public long fileSize;
 
 
 }
