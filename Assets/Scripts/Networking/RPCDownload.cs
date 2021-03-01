@@ -13,15 +13,30 @@ public class RPCDownload
 {
     public event Action<float> OnProgressUpdated;
     public event Action<byte[]> OnDownloadComplete;
-    
-    public void ListenForRPCDownloads()
+
+    int netChunkSize = 1024 * 16;
+    int _fileChunkSize = 1024 * 1024 * 50;
+
+    public void ListenForDownload()
     {
-        CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesDownloadPiece);
+        CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesDownloadPieceFromServer);
+    }
+
+    public void ListenForFilesNeededList()
+    {
+        CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesNeededListFromClient);
+    }
+
+    
+
+    public void StopListening()
+    {
+        CustomMessagingManager.UnregisterNamedMessageHandler("gameDownload");
     }
 
 
     public RPCDownload(string _messageName, ulong _clientId, byte[] _data) {
-        ListenForRPCDownloads();
+        ListenForDownload();
     }
 
 
@@ -54,12 +69,15 @@ public class RPCDownload
 
     }
 
-    public void Test ()
+    public void SendFilesDownload(List<string> _paths, ulong _clientID)
     {
-        Game.Instance.StartCoroutine( SendFilesDownload(new List<string>() { "C:/NVIDIA/file.txt" }, 0));
+        Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
     }
 
-    
+    public void Test()
+    {
+        SendFilesDownload(new List<string>() { "C:/NVIDIA/file.txt" }, 0);
+    }
     
 
     //the cap is around 180 for header packets per send if you follow the 64k unet rule (I try to keep under it)
@@ -75,13 +93,13 @@ public class RPCDownload
 
     List<FileHeader> headers = new List<FileHeader>();
     Dictionary<string, int> fileIndex = new Dictionary<string, int>();
-
+    List<int> filesNeeded = new List<int>();
     /// <summary>
     /// this function splits FILES into MEMORY SAFE sized chunks and safely sends one before starting another
     /// 
     /// files receipient needs to receive the same number of headers with each header packet (packet 1 counts as a header packet)
     /// </summary>
-    public IEnumerator SendFilesDownload(List<string> _paths, ulong _clientID, int _fileChunkSize = 1024*1024*50, int _netChunkSize = 1024*16)
+    public IEnumerator SendFilesDownloadRoutine(List<string> _paths, ulong _clientID)
     {
         if (downloadSendState != FilesDownloadSendState.Idle)
         {
@@ -89,7 +107,7 @@ public class RPCDownload
             yield break;
         }
 
-        downloadSendState = FilesDownloadSendState.Sending;
+        downloadSendState = FilesDownloadSendState.SendingHeaders;
 
         // packet 1: 
         // int32 fileCount | uint64 downloadSize | <start headers>
@@ -187,16 +205,22 @@ public class RPCDownload
         writer.Dispose();
         bitStream.Dispose();
 
+        downloadSendState = FilesDownloadSendState.AwaitingFilesNeededList;
+        ListenForFilesNeededList();
 
+        while (downloadSendState == FilesDownloadSendState.AwaitingFilesNeededList)
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
 
-        // loop headers
+        StopListening();
 
         bitStream = PooledBitStream.Get();
         writer = PooledBitWriter.Get(bitStream);
 
         foreach (var header in headers)
         {
-            if (File.Exists(header.path))
+            if (File.Exists(header.path) && filesNeeded[header.id] != null)
             {
                 using (FileStream fs = File.Open(header.path, FileMode.Open))
                 {
@@ -214,7 +238,7 @@ public class RPCDownload
 
                         
 
-                        foreach (byte[] netChunk in Split(fileChunk, _netChunkSize))
+                        foreach (byte[] netChunk in Split(fileChunk, netChunkSize))
                         {
 
                             // fileID
@@ -224,7 +248,7 @@ public class RPCDownload
                             writer.WriteByteArray(netChunk, netChunk.Length);
 
                             // isLastInPacket
-                            bool isLastInPacket = bitStream.Length >= _netChunkSize;
+                            bool isLastInPacket = bitStream.Length >= netChunkSize;
                             writer.WriteBit(isLastInPacket);
 
                             if (isLastInPacket)
@@ -259,8 +283,21 @@ public class RPCDownload
         yield break;
     }
 
+    private void ReceiveFilesNeededListFromClient(ulong sender, Stream _stream)
+    {
+        using (PooledBitReader reader = PooledBitReader.Get(_stream))
+        {
+            filesNeeded.AddRange(reader.ReadIntArray());
 
-    
+            bool isLastFilesNeededPacket = reader.ReadBit();
+            if (isLastFilesNeededPacket)
+            {
+                downloadSendState = FilesDownloadSendState.SendingFiles;
+            }
+
+        }
+    }
+
 
     public FilesDownloadReceiveState receptionState = FilesDownloadReceiveState.Idle;
 
@@ -279,7 +316,9 @@ public class RPCDownload
     int previousFileID = -1;
     public FileStream receptionFileStream;
 
-    public void ReceiveFilesDownloadPiece(ulong _senderClientID, Stream _stream)
+    int fileIDsPerPacket = 32000/4;
+
+    public void ReceiveFilesDownloadPieceFromServer(ulong _senderClientID, Stream _stream)
     {
         
         switch(receptionState)
@@ -299,6 +338,7 @@ public class RPCDownload
                 using (PooledBitReader reader = PooledBitReader.Get(_stream))
                 {
                     PullHeadersFromPacket(reader);
+                    SendNeededFilesListToServer();
                 }
 
                 break;
@@ -343,6 +383,44 @@ public class RPCDownload
                 }
                 break;
         }
+    }
+
+    void SendNeededFilesListToServer()
+    {
+        List<int> fileIDs = new List<int>();
+        int totalFilesToBeRequested = 0;
+
+
+
+        // TODO: compare hashes using binarys system and only add ones that we need, for now just put in everything
+        foreach (var header in receivedHeaders)
+        {
+            
+            // TODO: use header.hash to figure out if we need each file. This allows us to dump a ton of downloaded files together (maybe separating by lua, model, material, for convenience) and get them no matter
+
+            // we're just adding all of them without question for now
+            fileIDs.Add(header.id);
+            totalFilesToBeRequested++;
+
+
+            bool isLastPacket = (totalFilesToBeRequested >= receivedHeaders.Count);
+
+            if (fileIDs.Count >= fileIDsPerPacket || isLastPacket)
+            {
+                using (PooledBitStream bitStream = PooledBitStream.Get())
+                {
+                    using (PooledBitWriter writer = PooledBitWriter.Get(bitStream))
+                    {
+                        writer.WriteIntArray(fileIDs.ToArray());
+                        writer.WriteBit(isLastPacket);
+
+                        CustomMessagingManager.SendNamedMessage("gameDownload", NetworkingManager.Singleton.ServerClientId, bitStream, "MLAPI_INTERNAL");
+
+                    }
+                }
+            }
+        }
+        
     }
 
     public void PullHeadersFromPacket(PooledBitReader reader)
@@ -412,7 +490,9 @@ public class FileHeader
 public enum FilesDownloadSendState
 {
     Idle,
-    Sending,
+    SendingHeaders,
+    AwaitingFilesNeededList,
+    SendingFiles,
     AwaitingResponse
 }
 public enum FilesDownloadReceiveState
