@@ -99,6 +99,8 @@ public class LargeRPC
 
     #region Sender
 
+    public event Action OnCompletionMessage;
+
     List<int> filesNeededByRecipient = new List<int>();
 
     public void SendFile(string _path, ulong _clientID)
@@ -173,9 +175,12 @@ public class LargeRPC
 
 
         var headersThisPacket = 0;
+        var packetsSent = 0;
 
         foreach (var header in headers)
         {
+            
+
             var path = header.path;
             var id = header.id;
 
@@ -201,7 +206,20 @@ public class LargeRPC
                 headersThisPacket = 0;
 
                 CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
+                
+                //
+                if (packetsSent == 0)
+                {
+                    State = LargeRPCState.Send_AwaitingOkayToSend;
+                    
+                    while (State == LargeRPCState.Send_AwaitingOkayToSend)
+                    {
+                        yield return new WaitForSeconds(0.5f);
+                    }
+                }
 
+                packetsSent++;
+                
                 writer.Dispose();
                 bitStream.Dispose();
 
@@ -214,13 +232,13 @@ public class LargeRPC
             {
                 writer.WriteBit(false);
             }
-
         }
 
         writer.Dispose();
         bitStream.Dispose();
 
         State = LargeRPCState.Send_AwaitingFilesNeededList;
+
         ListenForFilesNeededList();
 
         while (State == LargeRPCState.Send_AwaitingFilesNeededList)
@@ -294,7 +312,11 @@ public class LargeRPC
 
         }
 
-        State = LargeRPCState.Send_AwaitingResponse;
+        State = LargeRPCState.Send_AwaitingClientCompletionMessage;
+        while (State == LargeRPCState.Send_AwaitingClientCompletionMessage)
+        {
+            OnCompletionMessage.Invoke();
+        }
         yield break;
     }
 
@@ -302,6 +324,11 @@ public class LargeRPC
     public void ListenForFilesNeededList()
     {
         CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveFilesNeededListFromReceiver);
+    }
+
+    public void ListenForReceiverCompletion()
+    {
+        CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveCompletionMessage);
     }
 
     private void ReceiveFilesNeededListFromReceiver(ulong sender, Stream _stream)
@@ -317,6 +344,11 @@ public class LargeRPC
             }
 
         }
+    }
+
+    private void ReceiveCompletionMessage(ulong sender, Stream _stream)
+    {
+        State = LargeRPCState.Complete;
     }
 
 
@@ -520,10 +552,12 @@ public enum TransmissionState { Idle, Send, Receive };
 public enum LargeRPCState
 {
     Idle,
+    Send_AwaitingOkayToSend,
     Send_SendingHeaders,
     Send_AwaitingFilesNeededList,
     Send_SendingFiles,
-    Send_AwaitingResponse,
+    Send_AwaitingClientCompletionMessage,
     Receive_AwaitingAllHeaders,
-    Receive_AwaitingAllFileData
+    Receive_AwaitingAllFileData,
+    Complete
 }
