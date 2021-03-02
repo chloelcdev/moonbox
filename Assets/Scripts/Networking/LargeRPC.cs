@@ -11,15 +11,20 @@ using System.Text;
 
 public class LargeRPC
 {
+    string messageName = "";
+
     public LargeRPC(string _messageName)
     {
         messageName = _messageName;
     }
 
-    string messageName = "";
+    
+
 
     public event Action<float> OnProgressUpdated;
     public event Action<byte[]> OnDownloadComplete;
+
+    public List<FileHeader> headers = new List<FileHeader>();
 
     public LargeRPCState State = LargeRPCState.Idle;
 
@@ -39,6 +44,8 @@ public class LargeRPC
         }
     }
 
+    #region read-only info
+
     // 64k cap on Unet packets, trying to stick around 32k to be safe
 
     // headers are about 300b/packet depending on file path length
@@ -53,8 +60,9 @@ public class LargeRPC
     // the size of the pieces of file we read into memory at a time when sending are
     int fileChunkSize { get => 1024 * 1024 * 50; }
 
+    #endregion
 
-    public List<FileHeader> headers = new List<FileHeader>();
+    
 
 
     public void StopListening()
@@ -85,6 +93,7 @@ public class LargeRPC
         downloadSize = 0;
         previousFileID = -1;
     }
+
 
 
 
@@ -312,6 +321,8 @@ public class LargeRPC
 
 
     #endregion
+
+
 
 
     #region Receiver
