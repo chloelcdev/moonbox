@@ -9,7 +9,7 @@ using System.IO;
 using MLAPI.Serialization.Pooled;
 using System.Text;
 
-public class RPCDownload
+public class LargeRPC
 {
     public event Action<float> OnProgressUpdated;
     public event Action<byte[]> OnDownloadComplete;
@@ -17,25 +17,27 @@ public class RPCDownload
     int netChunkSize = 1024 * 16;
     int _fileChunkSize = 1024 * 1024 * 50;
 
+    string messageName = "";
+
     public void ListenForDownload()
     {
-        CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesDownloadPieceFromServer);
+        CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveFilesDownloadPieceFromServer);
     }
 
     public void ListenForFilesNeededList()
     {
-        CustomMessagingManager.RegisterNamedMessageHandler("gameDownload", ReceiveFilesNeededListFromClient);
+        CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveFilesNeededListFromClient);
     }
 
     
 
     public void StopListening()
     {
-        CustomMessagingManager.UnregisterNamedMessageHandler("gameDownload");
+        CustomMessagingManager.UnregisterNamedMessageHandler(messageName);
     }
 
 
-    public RPCDownload(string _messageName, ulong _clientId, byte[] _data) {
+    public LargeRPC(string _messageName) {
         ListenForDownload();
     }
 
@@ -69,14 +71,19 @@ public class RPCDownload
 
     }
 
-    public void SendFilesDownload(List<string> _paths, ulong _clientID)
+    public void SendFiles(List<string> _paths, ulong _clientID)
     {
         Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
     }
-
-    public void Test()
+    public void SendFile(string _path, ulong _clientID)
     {
-        SendFilesDownload(new List<string>() { "C:/NVIDIA/file.txt" }, 0);
+        SendFiles(new List<string>() { _path }, _clientID);
+    }
+
+    public static void Test()
+    {
+        LargeRPC download = new LargeRPC("gameDownload");
+        download.SendFiles(new List<string>() { "C:/NVIDIA/file.txt" }, NetworkingManager.Singleton.LocalClientId);
     }
     
 
@@ -132,7 +139,7 @@ public class RPCDownload
                 {
 
                     int id = headers.Count - 1;
-                    byte[] fileHash = sha256(fs);
+                    byte[] fileHash = fs.sha256();
 
                     fileIndex.Add(path, id);
                     headers.Add(new FileHeader(id, path, fileHash, (long)fs.Length));
@@ -185,7 +192,7 @@ public class RPCDownload
 
                 headersThisPacket = 0;
 
-                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+                CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
 
                 writer.Dispose();
                 bitStream.Dispose();
@@ -220,7 +227,7 @@ public class RPCDownload
 
         foreach (var header in headers)
         {
-            if (File.Exists(header.path) && filesNeeded[header.id] != null)
+            if (File.Exists(header.path) && filesNeeded.Contains(header.id))
             {
                 using (FileStream fs = File.Open(header.path, FileMode.Open))
                 {
@@ -254,7 +261,7 @@ public class RPCDownload
                             if (isLastInPacket)
                             {
 
-                                CustomMessagingManager.SendNamedMessage("gameDownload", _clientID, bitStream, "MLAPI_INTERNAL");
+                                CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
 
                                 writer.Dispose();
                                 bitStream.Dispose();
@@ -414,7 +421,7 @@ public class RPCDownload
                         writer.WriteIntArray(fileIDs.ToArray());
                         writer.WriteBit(isLastPacket);
 
-                        CustomMessagingManager.SendNamedMessage("gameDownload", NetworkingManager.Singleton.ServerClientId, bitStream, "MLAPI_INTERNAL");
+                        CustomMessagingManager.SendNamedMessage(messageName, NetworkingManager.Singleton.ServerClientId, bitStream, "MLAPI_INTERNAL");
 
                     }
                 }
@@ -444,20 +451,6 @@ public class RPCDownload
                 break;
             }
         }
-    }
-
-    static byte[] sha256(byte[] _bytes)
-    {
-        var crypt = new System.Security.Cryptography.SHA256Managed();
-        byte[] crypto = crypt.ComputeHash(_bytes);
-        return crypto;
-    }
-
-    static byte[] sha256(FileStream _stream)
-    {
-        var crypt = new System.Security.Cryptography.SHA256Managed();
-        byte[] crypto = crypt.ComputeHash(_stream);
-        return crypto;
     }
 }
 
@@ -500,4 +493,21 @@ public enum FilesDownloadReceiveState
     Idle,
     AwaitingAllHeaders,
     AwaitingAllFileData
+}
+
+public static class Extensions
+{
+    public static byte[] sha256(this byte[] _bytes)
+    {
+        var crypt = new System.Security.Cryptography.SHA256Managed();
+        byte[] crypto = crypt.ComputeHash(_bytes);
+        return crypto;
+    }
+
+    public static byte[] sha256(this FileStream _stream)
+    {
+        var crypt = new System.Security.Cryptography.SHA256Managed();
+        byte[] crypto = crypt.ComputeHash(_stream);
+        return crypto;
+    }
 }
