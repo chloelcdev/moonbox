@@ -33,6 +33,10 @@ public class Game : MonoBehaviour
             Debug.Log("listening");
             TestReceive();
         }
+        if (Keyboard.current.rKey.wasPressedThisFrame)
+        {
+            Debug.Log(NetworkingManager.Singleton.LocalClientId);
+        }
     }
 
 
@@ -43,7 +47,7 @@ public class Game : MonoBehaviour
         if (path.Length != 0)
         {
             LargeRPC download = new LargeRPC("gameDownload");
-            download.SendFiles(new List<string>() { path }, NetworkingManager.Singleton.LocalClientId);
+            download.SendFiles(new List<string>() { path }, NetworkingManager.Singleton.ConnectedClients[2].ClientId);
         }
 #endif
     }
