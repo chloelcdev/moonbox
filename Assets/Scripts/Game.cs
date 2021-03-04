@@ -36,13 +36,14 @@ public class Game : MonoBehaviour
 
     public void Test()
     {
+#if UNITY_EDITOR
         string path = UnityEditor.EditorUtility.OpenFilePanel("Overwrite with png", "", "png");
         if (path.Length != 0)
         {
             LargeRPC download = new LargeRPC("gameDownload");
             download.SendFiles(new List<string>() { path }, NetworkingManager.Singleton.LocalClientId);
-
         }
+#endif
     }
 
     public void TestReceive()
