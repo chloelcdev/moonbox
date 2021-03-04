@@ -421,6 +421,7 @@ public class LargeRPC
 
     public void ReceiveFilesDownloadPieceFromSender(ulong _senderClientID, Stream _stream)
     {
+        Debug.LogError("packet");
         switch (State)
         {
             case LargeRPCState.Receive_AwaitingFirstPacket:
