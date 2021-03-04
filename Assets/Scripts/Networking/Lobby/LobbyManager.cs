@@ -4,6 +4,7 @@ using UnityEngine;
 using MLAPI;
 using MLAPI.Spawning;
 using MLAPI.Transports.UNET;
+using UnityEngine.UI;
 using UnityEngine.UIElements;
 using MLAPI.SceneManagement;
 using DG.Tweening;
@@ -15,7 +16,8 @@ public class LobbyManager : MonoBehaviour
     public static UnetTransport Transport;
 
     public GameObject Lobby;
-    
+    public InputField createServerName;
+    public InputField joinAddress;
 
     void Start()
     {
@@ -28,11 +30,12 @@ public class LobbyManager : MonoBehaviour
         return transform;
     }
 
-    public TextField createServerName;
-    public TextField joinAddress;
+    
 
     public void JoinServer()
     {
+        print(joinAddress);
+        print(joinAddress.text);
         if (joinAddress.text.Contains(":"))
         {
             JoinServer(joinAddress.text);

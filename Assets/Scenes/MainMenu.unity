@@ -238,6 +238,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Lobby: {fileID: 809011245}
+  createServerName: {fileID: 0}
+  joinAddress: {fileID: 815037259}
 --- !u!1 &555583982
 GameObject:
   m_ObjectHideFlags: 0
@@ -1602,7 +1604,7 @@ MonoBehaviour:
   m_OnClick:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 0}
+      - m_Target: {fileID: 150677712}
         m_TargetAssemblyTypeName: LobbyManager, Moonbox
         m_MethodName: JoinServer
         m_Mode: 1
