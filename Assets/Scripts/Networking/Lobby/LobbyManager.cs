@@ -34,9 +34,7 @@ public class LobbyManager : MonoBehaviour
 
     public void JoinServer()
     {
-        print(joinAddress);
-        print(joinAddress.text);
-        if (joinAddress.text.Contains(":"))
+        if (!joinAddress.text.Contains(":"))
         {
             JoinServer(joinAddress.text);
         }

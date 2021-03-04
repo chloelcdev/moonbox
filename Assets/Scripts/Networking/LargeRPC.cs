@@ -352,6 +352,7 @@ public class LargeRPC
 
         StopListening();
 
+        Debug.Log("complete");
         OnDownloadComplete.Invoke(TransmissionState.Send);
 
         State = LargeRPCState.Idle;
@@ -382,6 +383,7 @@ public class LargeRPC
             if (clientFinished)
             {
                 State = LargeRPCState.Complete;
+                Debug.Log("complete");
                 OnDownloadComplete.Invoke(TransmissionState.Send);
             }
 

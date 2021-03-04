@@ -2,6 +2,7 @@ using MLAPI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Game : MonoBehaviour
 {
@@ -23,12 +24,13 @@ public class Game : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.T))
-        {
+        if (Keyboard.current.tKey.wasPressedThisFrame) {
+            Debug.Log("sending");
             Test();
         }
-        if (Input.GetKeyDown(KeyCode.R))
+        if (Keyboard.current.rKey.wasPressedThisFrame)
         {
+            Debug.Log("listening");
             TestReceive();
         }
     }

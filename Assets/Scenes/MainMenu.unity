@@ -240,6 +240,49 @@ MonoBehaviour:
   Lobby: {fileID: 809011245}
   createServerName: {fileID: 0}
   joinAddress: {fileID: 815037259}
+--- !u!1 &287259913
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 287259915}
+  - component: {fileID: 287259914}
+  m_Layer: 0
+  m_Name: MainGame
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &287259914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 287259913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 037ee45c1e6175841bb501dc4bbf66c4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &287259915
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 287259913}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 354.5376, y: 30.193422, z: -264.1826}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 6
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &555583982
 GameObject:
   m_ObjectHideFlags: 0
@@ -273,8 +316,8 @@ MonoBehaviour:
   MessageBufferSize: 5120
   MaxConnections: 100
   ConnectAddress: 127.0.0.1
-  ConnectPort: 7777
-  ServerListenPort: 7777
+  ConnectPort: 20202
+  ServerListenPort: 20202
   ServerWebsocketListenPort: 8887
   SupportWebsocket: 0
   Channels: []
