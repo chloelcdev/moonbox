@@ -1,3 +1,4 @@
+using MLAPI;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -22,10 +23,32 @@ public class Game : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            Test();
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            TestReceive();
+        }
     }
 
 
+    public void Test()
+    {
+        string path = UnityEditor.EditorUtility.OpenFilePanel("Overwrite with png", "", "png");
+        if (path.Length != 0)
+        {
+            LargeRPC download = new LargeRPC("gameDownload");
+            download.SendFiles(new List<string>() { path }, NetworkingManager.Singleton.LocalClientId);
 
+        }
+    }
+
+    public void TestReceive()
+    {
+        LargeRPC download = new LargeRPC("gameDownload");
+        download.ListenForDownload();
+    }
 
 }

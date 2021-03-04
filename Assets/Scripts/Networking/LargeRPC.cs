@@ -76,11 +76,7 @@ public class LargeRPC
         CustomMessagingManager.UnregisterNamedMessageHandler(messageName);
     }
 
-    public static void Test()
-    {
-        LargeRPC download = new LargeRPC("gameDownload");
-        download.SendFiles(new List<string>() { "C:/NVIDIA/file.txt" }, NetworkingManager.Singleton.LocalClientId);
-    }
+    
 
     public void Clear()
     {
@@ -559,7 +555,7 @@ public class LargeRPC
 
                 if (!File.Exists(headers[id].path))
                 {
-                    File.Create(headers[id].path, (int)headers[id].fileSize);
+                    File.Create(headers[id].path + ".test", (int)headers[id].fileSize);
                 }
 
                 receptionFileStream = File.Open(headers[id].path, FileMode.Append);
