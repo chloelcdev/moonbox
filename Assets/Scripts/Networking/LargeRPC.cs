@@ -327,14 +327,17 @@ public class LargeRPC
 
         // now just wait for them to tell us they're good
 
-        State = LargeRPCState.Send_AwaitingClientCompletionMessage;
+        State = LargeRPCState.Send_AwaitingReceiverCompletionMessage;
 
-        while (State == LargeRPCState.Send_AwaitingClientCompletionMessage)
+        ListenForReceiverCompletion();
+
+        while (State == LargeRPCState.Send_AwaitingReceiverCompletionMessage)
         {
             yield return new WaitForSeconds(0.5f);
         }
 
         StopListening();
+
         OnDownloadComplete.Invoke(TransmissionState.Send);
 
         State = LargeRPCState.Idle;
@@ -437,7 +440,7 @@ public class LargeRPC
                     if (PullHeadersFromPacket(reader))
                     {
                         State = LargeRPCState.Receive_AwaitingAllFileData;
-                        SendNeededFilesListToSender();
+                        SendNeededFilesListToSender(GetNeededFiles());
                     }
                 }
 
@@ -450,24 +453,33 @@ public class LargeRPC
                     if (PullFilesFromPacket(reader))
                     {
                         // tell the server we're good to go (later on we'll need a recursive hash check so we make sure we get all the files properly
-                        using (PooledBitStream okay = PooledBitStream.Get())
+
+
+                        List<int> filesNeeded = new List<int>();
+
+                        foreach (var header in headers)
                         {
-                            using (PooledBitWriter okayWriter = PooledBitWriter.Get(okay))
+                            using (FileStream fs = new FileStream(header.path, FileMode.Append))
                             {
-                                okayWriter.WriteBool(true);
-                                CustomMessagingManager.SendNamedMessage(messageName, senderID, okay, "MLAPI_INTERNAL");
+                                if (fs.sha256() != header.hash)
+                                {
+                                    filesNeeded.Add(header.id);
+                                }
                             }
                         }
-                        
 
-                        OnDownloadComplete.Invoke(TransmissionState.Receive);
-                        StopListening();
-                        State = LargeRPCState.Idle;
+
+                        Game.Instance.StartCoroutine(SendNeededFilesListToSender(filesNeeded));
+
+
+                        
                     }
                 }
                 break;
+
         }
     }
+
 
     /// <summary>
     /// 
@@ -553,7 +565,7 @@ public class LargeRPC
         return false;
     }
 
-    void SendNeededFilesListToSender()
+    List<int> GetNeededFiles()
     {
         List<int> fileIDs = new List<int>();
 
@@ -566,27 +578,64 @@ public class LargeRPC
 
             // we're just adding all of them without question for now
             fileIDs.Add(header.id);
+        }
 
+        return fileIDs;
+    }
 
-            bool isFinalPacket = (i >= headers.Count);
+    // Essentially, when this is passed an empty list, the okay will be sent to the server
+    IEnumerator SendNeededFilesListToSender(List<int> _fileIDs)
+    {
+        PooledBitStream bitStream = PooledBitStream.Get();
+        PooledBitWriter writer = PooledBitWriter.Get(bitStream);
 
-            if (fileIDs.Count >= fileIDsPerPacket || isFinalPacket)
+        bool allFilesReceived = _fileIDs.Count == 0;
+        if (allFilesReceived)
+        {
+            writer.WriteBit(true);
+            writer.WriteIntArray(new int[0]);
+            writer.WriteBit(true);
+
+            CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
+
+            bitStream.Dispose();
+            writer.Dispose();
+            _fileIDs.Clear();
+
+            OnDownloadComplete.Invoke(TransmissionState.Receive);
+
+            State = LargeRPCState.Idle;
+        }
+        else
+        {
+            var i = 0;
+            foreach (var id in _fileIDs)
             {
-                using (PooledBitStream bitStream = PooledBitStream.Get())
+                i++;
+
+                bool isFinalPacket = i >= _fileIDs.Count;
+
+                if (i >= _fileIDs.Count)
                 {
-                    using (PooledBitWriter writer = PooledBitWriter.Get(bitStream))
-                    {
-                        writer.WriteIntArray(fileIDs.ToArray());
-                        writer.WriteBit(isFinalPacket);
+                    writer.WriteBit(isFinalPacket);
+                    writer.WriteIntArray(_fileIDs.ToArray());
+                    writer.WriteBit(false);
 
-                        CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
+                    CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
 
-                    }
+                    bitStream.Dispose();
+                    writer.Dispose();
+                    _fileIDs.Clear();
+
+                    bitStream = PooledBitStream.Get();
+                    writer = PooledBitWriter.Get(bitStream);
+
+                    yield return new WaitForSeconds(1 / 15);
                 }
-
-                fileIDs.Clear();
             }
         }
+
+        yield break;
 
     }
 
@@ -653,7 +702,7 @@ public enum LargeRPCState
     Send_SendingHeaders,
     Send_AwaitingFilesNeededList,
     Send_SendingFiles,
-    Send_AwaitingClientCompletionMessage,
+    Send_AwaitingReceiverCompletionMessage,
     Receive_AwaitingFirstPacket,
     Receive_AwaitingAllHeaders,
     Receive_AwaitingAllFileData,
