@@ -513,12 +513,19 @@ public class LargeRPC
 
                         foreach (var header in headers)
                         {
-                            using (FileStream fs = new FileStream(header.path, FileMode.Append))
+                            if (File.Exists(header.path + "_test.test"))
                             {
-                                if (fs.sha256() != header.hash)
+                                using (FileStream fs = new FileStream(header.path + "_test.test", FileMode.Open))
                                 {
-                                    filesNeeded.Add(header.id);
+                                    if (fs.sha256() != header.hash)
+                                    {
+                                        filesNeeded.Add(header.id);
+                                    }
                                 }
+                            }
+                            else
+                            {
+                                Debug.LogError("File not found, you messed up, holmes.");
                             }
                         }
 
