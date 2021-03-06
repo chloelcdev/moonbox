@@ -55,13 +55,13 @@ public class LargeRPC
     // 64k cap on Unet packets, trying to stick around 32k to be safe
 
     // headers are about 300b/packet depending on file path length
-    public static int headersPerPacket { get => 32000 / 300; }
+    public static int headersPerPacket { get => 6000 / 300; }
 
     // file IDs are int32s, they're 4 bytes
-    public static int fileIDsPerPacket { get => 32000 / 4; }
+    public static int fileIDsPerPacket { get => 6000 / 4; }
 
     // the size of the pieces are that we actually send over the network
-    int netChunkSize { get => 1024 * 32; }
+    int netChunkSize { get => 1024 * 6; }
 
     // the size of the pieces of file we read into memory at a time when sending are
     int fileChunkSize { get => 1024 * 1024 * 50; }
@@ -146,10 +146,10 @@ public class LargeRPC
         * int fileCount 4b | long downloadSize 8b | <start headers>
         * 
         * header packets
-        * int fileID 4b | string filename varsize | byte[256] hash 256b | long fileLength 8b | bool isLastInPacket 1bit
+        * int fileID 4b | string filename varsize | byte[256] hash 32b | long fileLength 8b | bool isLastInPacket 1bit
         * 
         * subsequent packets
-        * int fileID 4b | byte[var] filedata | bool isLastInPacket 1bit
+        * int fileID 4b | int filedata_length 4b | byte[var] filedata <=netChunkSize | bool isLastInPacket 1byte
         */
         #endregion
 
@@ -219,18 +219,16 @@ public class LargeRPC
             // fileLength
             writer.WriteInt64(header.fileSize);
 
-            Debug.Log("---------");
-            Debug.Log(id);
-            Debug.Log(headers.Count - 1);
+            bool isLastPacket = id >= headers.Count - 1;
 
             // send it off if we've filled up a packet
-            if (headersThisPacket >= headersPerPacket || id >= headers.Count - 1)
+            if (headersThisPacket >= headersPerPacket || isLastPacket)
             {
                 Debug.Log("message going out");
                 // isLastInPacket
                 writer.WriteBit(true);
 
-                headersThisPacket = 0;
+                
 
                 CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
 
@@ -248,14 +246,20 @@ public class LargeRPC
                 }*/
 
                 packetsSent++;
-                
+                Debug.Log("headers: "+headersThisPacket + "          packets: " + packetsSent);
+                headersThisPacket = 0;
+
                 writer.Dispose();
                 bitStream.Dispose();
 
                 bitStream = PooledBitStream.Get();
                 writer = PooledBitWriter.Get(bitStream);
 
-                yield return new WaitForSeconds(1 / 14);
+                // don't wait on the last one
+                if (!isLastPacket)
+                {
+                    yield return new WaitForSeconds(1 / 14);
+                }
             }
             else
             {
@@ -270,17 +274,19 @@ public class LargeRPC
 
         ChangeState(LargeRPCState.Send_AwaitingFilesNeededList);
 
-        ListenForFilesNeededListOrCompletion();
+        
 
         // loop start
         while (State != LargeRPCState.Complete)
         {
             #region wait for needed files list
 
+            ListenForFilesNeededListOrCompletion();
             while (State == LargeRPCState.Send_AwaitingFilesNeededList)
             {
                 yield return new WaitForSeconds(0.5f);
             }
+            StopListening();
 
             #endregion
             // runs ReceiveFilesNeededListFromReceiver, changes state to either Send_SendingFiles or Complete
@@ -317,7 +323,7 @@ public class LargeRPC
                                 writer.WriteInt32(header.id);
 
                                 // filedata
-                                writer.WriteByteArray(netChunk, netChunk.Length);
+                                writer.WriteByteArray(netChunk);
 
                                 // isLastInPacket
                                 bool isLastInPacket = bitStream.Length >= netChunkSize;
@@ -383,15 +389,19 @@ public class LargeRPC
     // this will pass nothing when they're done
     private void ReceiveFilesNeededListFromReceiver(ulong sender, Stream _stream)
     {
+        Debug.Log("receiving needed files list");
         using (PooledBitReader reader = PooledBitReader.Get(_stream))
         {
             bool isFinalPacket = reader.ReadBit();
             filesNeededByRecipient.AddRange(reader.ReadIntArray());
             bool clientFinished = reader.ReadBit();
 
+            Debug.Log("----------\n"+isFinalPacket + "\n" + filesNeededByRecipient.Count + "\n" + clientFinished + "\n");
+
             if (isFinalPacket)
             {
                 ChangeState(LargeRPCState.Send_SendingFiles);
+                StopListening();
             }
 
             if (clientFinished)
@@ -399,6 +409,7 @@ public class LargeRPC
                 ChangeState(LargeRPCState.Complete);
                 Debug.Log("complete");
                 if (OnDownloadComplete != null) OnDownloadComplete(TransmissionState.Send);
+                StopListening();
             }
 
         }
@@ -479,7 +490,7 @@ public class LargeRPC
                     if (PullHeadersFromPacket(reader))
                     {
                         ChangeState(LargeRPCState.Receive_AwaitingAllFileData);
-                        SendNeededFilesListToSender(GetNeededFiles());
+                        Game.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
                     }
                 }
 
@@ -537,6 +548,7 @@ public class LargeRPC
             bool isLastInPacket = reader.ReadBool();
 
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
+            Debug.LogError("header received: " + id + " " + filename);
             bytesDownloaded += header.HeaderPacketBytes();
             if (OnProgressUpdated!=null) OnProgressUpdated(bytesDownloaded / downloadSize);
             headers.Add(header);
@@ -563,20 +575,22 @@ public class LargeRPC
 
         while (!packetProcessed)
         {
+            Debug.Log("pass");
             int id = reader.ReadInt32();
-            byte[] data = reader.ReadByteArray(null);
+            byte[] data = reader.ReadByteArray();
             packetProcessed = reader.ReadBit();
 
             bytesDownloaded += headers[id].FilePacketBytes();
             if (OnProgressUpdated != null) OnProgressUpdated(bytesDownloaded / downloadSize);
 
             numFilesReceived++;
+            Debug.Log(bytesDownloaded + "   /   " + downloadSize);
             bool allFilesProcessed = bytesDownloaded >= downloadSize;
 
             if (id != previousFileID)
             {
 
-                receptionFileStream.Dispose();
+                if (receptionFileStream != null) receptionFileStream.Dispose();
 
                 if (!File.Exists(headers[id].path + "_test.test"))
                 {
@@ -626,6 +640,7 @@ public class LargeRPC
     // Essentially, when this is passed an empty list, the okay will be sent to the server
     IEnumerator SendNeededFilesListToSender(List<int> _fileIDs)
     {
+        Debug.Log(1111);
         PooledBitStream bitStream = PooledBitStream.Get();
         PooledBitWriter writer = PooledBitWriter.Get(bitStream);
 
@@ -649,7 +664,8 @@ public class LargeRPC
         else
         {
             var i = 0;
-            foreach (var id in _fileIDs)
+            List<int> ids = _fileIDs;
+            foreach (var id in ids)
             {
                 i++;
 
@@ -665,12 +681,15 @@ public class LargeRPC
 
                     bitStream.Dispose();
                     writer.Dispose();
-                    _fileIDs.Clear();
 
                     bitStream = PooledBitStream.Get();
                     writer = PooledBitWriter.Get(bitStream);
 
-                    yield return new WaitForSeconds(1 / 15);
+                    _fileIDs.Clear();
+
+                    yield return new WaitForSeconds(1 / 8);
+
+                    break;
                 }
             }
         }
