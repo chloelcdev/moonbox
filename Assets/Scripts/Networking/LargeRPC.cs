@@ -555,7 +555,7 @@ public class LargeRPC
             bool isLastInPacket = reader.ReadBool();
 
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
-            Debug.LogError("header received: " + id + " " + filename);
+            Debug.LogError("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
             bytesDownloaded += header.HeaderPacketBytes();
             if (OnProgressUpdated!=null) OnProgressUpdated(bytesDownloaded / downloadSize);
             headers.Add(header);
@@ -582,10 +582,12 @@ public class LargeRPC
 
         while (!packetProcessed)
         {
-            Debug.Log("pass");
+            
             int id = reader.ReadInt32();
             byte[] data = reader.ReadByteArray();
             packetProcessed = reader.ReadBit();
+
+            Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetProcessed.ToString());
 
             bytesDownloaded += headers[id].FilePacketBytes();
             if (OnProgressUpdated != null) OnProgressUpdated(bytesDownloaded / downloadSize);
@@ -598,11 +600,6 @@ public class LargeRPC
             {
 
                 if (receptionFileStream != null) receptionFileStream.Dispose();
-
-                if (!File.Exists(headers[id].path + "_test.test"))
-                {
-                    File.Create(headers[id].path + "_test.test", (int)headers[id].fileSize);
-                }
 
                 receptionFileStream = File.Open(headers[id].path + "_test.test", FileMode.Append);
             }
@@ -655,7 +652,7 @@ public class LargeRPC
         if (allFilesReceived)
         {
             writer.WriteBit(true);
-            writer.WriteIntArray(new int[0]);
+            writer.WriteIntArray(_fileIDs.ToArray());
             writer.WriteBit(true);
 
             CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
