@@ -20,7 +20,7 @@ public class LargeRPC
 
     
     public event Action<float> OnProgressUpdated;
-    public event Action<TransmissionState> OnDownloadComplete;
+    public event Action<TransmissionSide> OnDownloadComplete;
 
     public List<FileHeader> headers = new List<FileHeader>();
 
@@ -33,19 +33,19 @@ public class LargeRPC
     /// <summary>
     /// Tells you whether this RPC is Idle, Sending, or Receiving based on the State
     /// </summary>
-    public TransmissionState transmissionState {
+    public TransmissionSide transmissionState {
         get {
 
             if (State.ToString().Contains("Send_"))
             {
-                return TransmissionState.Send;
+                return TransmissionSide.Send;
             }
             else if (State.ToString().Contains("Receive_"))
             {
-                return TransmissionState.Receive;
+                return TransmissionSide.Receive;
             }
             
-            return TransmissionState.Idle;
+            return TransmissionSide.Idle;
         }
     }
 
@@ -81,7 +81,7 @@ public class LargeRPC
 
     public void Clear()
     {
-        if (transmissionState != TransmissionState.Idle)
+        if (transmissionState != TransmissionSide.Idle)
         {
             Debug.Log("Cannot clear LargeRPC until it has finished the current job.");
             return;
@@ -213,6 +213,7 @@ public class LargeRPC
             // filename
             writer.WriteString(path);
 
+            Debug.Log(Encoding.Unicode.GetString(header.hash));
             // hash
             writer.WriteByteArray(header.hash, 32);
 
@@ -274,97 +275,117 @@ public class LargeRPC
 
         ChangeState(LargeRPCState.Send_AwaitingFilesNeededList);
 
-        
+
+        ListenForFilesNeededListOrCompletion();
 
         // loop start
         while (State != LargeRPCState.Complete)
         {
+            Debug.Log("Not done, running not-complete loop");
             #region wait for needed files list
 
-            ListenForFilesNeededListOrCompletion();
-            while (State == LargeRPCState.Send_AwaitingFilesNeededList)
+            while (State == LargeRPCState.Send_AwaitingFilesNeededList || State == LargeRPCState.Send_EnsuringIntegrity)
             {
+                Debug.Log("waiting for list");
                 yield return new WaitForSeconds(0.5f);
             }
-            StopListening();
+
+            Debug.Log("No longer waiting for list");
 
             #endregion
             // runs ReceiveFilesNeededListFromReceiver, changes state to either Send_SendingFiles or Complete
 
-            #region send files
 
-            bitStream = PooledBitStream.Get();
-            writer = PooledBitWriter.Get(bitStream);
-
-            foreach (var header in headers)
+            if (filesNeededByRecipient.Count > 0)
             {
-                if (File.Exists(header.path) && filesNeededByRecipient.Contains(header.id))
+                Debug.Log("client still needs more files, sending");
+                #region send files
+
+                bitStream = PooledBitStream.Get();
+                writer = PooledBitWriter.Get(bitStream);
+
+                foreach (var header in headers)
                 {
-                    using (FileStream fs = File.Open(header.path, FileMode.Open))
+                    Debug.Log("processing header");
+                    if (File.Exists(header.path) && filesNeededByRecipient.Contains(header.id))
                     {
-
-                        // while loop pulled from fs.Read docs from microsoft, a little confusing to the glance but works and will be fast
-
-                        int numBytesToRead = (int)fs.Length;
-                        int numBytesRead = 0;
-                        while (numBytesToRead > 0)
+                        Debug.Log("file is needed");
+                        using (FileStream fs = File.Open(header.path, FileMode.Open))
                         {
 
-                            byte[] fileChunk = new byte[fileChunkSize];
-                            // Read may return anything from 0 to numBytesToRead.
-                            int n = fs.Read(fileChunk, numBytesRead, fileChunkSize);
+                            // while loop pulled from fs.Read docs from microsoft, a little confusing to the glance but works and will be fast
 
-
-
-                            foreach (byte[] netChunk in fileChunk.Split(netChunkSize))
+                            int numBytesToRead = (int)fs.Length;
+                            int numBytesRead = 0;
+                            while (numBytesToRead > 0)
                             {
+                                Debug.Log("still bytes left");
 
-                                // fileID
-                                writer.WriteInt32(header.id);
+                                byte[] fileChunk = new byte[fileChunkSize];
+                                // Read may return anything from 0 to numBytesToRead.
+                                int n = fs.Read(fileChunk, numBytesRead, fileChunkSize);
 
-                                // filedata
-                                writer.WriteByteArray(netChunk);
 
-                                // isLastInPacket
-                                bool isLastInPacket = bitStream.Length >= netChunkSize;
-                                writer.WriteBit(isLastInPacket);
 
-                                if (isLastInPacket)
+                                foreach (byte[] netChunk in fileChunk.Split(netChunkSize))
                                 {
+                                    Debug.Log("processing next chunk");
 
-                                    CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
+                                    // fileID
+                                    writer.WriteInt32(header.id);
 
-                                    writer.Dispose();
-                                    bitStream.Dispose();
+                                    // filedata
+                                    writer.WriteByteArray(netChunk);
 
-                                    bitStream = PooledBitStream.Get();
-                                    writer = PooledBitWriter.Get(bitStream);
+                                    // isLastInPacket
+                                    bool isLastInPacket = bitStream.Length >= netChunkSize;
+                                    writer.WriteBit(isLastInPacket);
 
-                                    yield return new WaitForSeconds(1 / 14);
+                                    if (isLastInPacket)
+                                    {
+
+                                        CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
+                                        Debug.Log("packet sent");
+
+                                        yield return new WaitForSeconds(1 / 14);
+
+                                        writer.Dispose();
+                                        bitStream.Dispose();
+
+                                        bitStream = PooledBitStream.Get();
+                                        writer = PooledBitWriter.Get(bitStream);
+                                    }
+
                                 }
 
+                                // Break when the end of the file is reached.
+                                if (n == 0)
+                                {
+                                    Debug.Log("end of file reached");
+                                    break;
+                                }
+
+                                numBytesRead += n;
+                                numBytesToRead -= n;
                             }
-
-                            // Break when the end of the file is reached.
-                            if (n == 0) break;
-
-                            numBytesRead += n;
-                            numBytesToRead -= n;
                         }
                     }
                 }
+
+                Debug.Log("all headers processed");
+
+                filesNeededByRecipient.Clear();
+
+                // just failsafing these, should be disposed of already
+                writer.Dispose();
+                bitStream.Dispose();
+
+                #endregion
+
+                ChangeState(LargeRPCState.Send_EnsuringIntegrity);
             }
 
-            filesNeededByRecipient.Clear();
-
-            // just failsafing these, should be disposed of already
-            writer.Dispose();
-            bitStream.Dispose();
-
-            #endregion
-
-            ChangeState(LargeRPCState.Send_EnsuringIntegrity);
-
+            Debug.Log("Waiting 2 seconds before checking completion again");
             yield return new WaitForSeconds(2f);
         
         }
@@ -372,7 +393,7 @@ public class LargeRPC
         StopListening();
 
         Debug.Log("complete");
-        if (OnDownloadComplete != null) OnDownloadComplete(TransmissionState.Send);
+        if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Send);
 
         ChangeState(LargeRPCState.Idle);
 
@@ -398,17 +419,16 @@ public class LargeRPC
 
             Debug.Log("----------\n"+isFinalPacket + "\n" + filesNeededByRecipient.Count + "\n" + clientFinished + "\n");
 
-            if (isFinalPacket)
+            if (isFinalPacket && !clientFinished)
             {
                 ChangeState(LargeRPCState.Send_SendingFiles);
-                StopListening();
             }
 
             if (clientFinished)
             {
                 ChangeState(LargeRPCState.Complete);
                 Debug.Log("complete");
-                if (OnDownloadComplete != null) OnDownloadComplete(TransmissionState.Send);
+                if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Send);
                 StopListening();
             }
 
@@ -437,6 +457,7 @@ public class LargeRPC
     int previousFileID = -1;
 
     FileStream receptionFileStream;
+    BinaryWriter receptionFileStreamWriter;
 
     public void ListenForDownload()
     {
@@ -508,16 +529,23 @@ public class LargeRPC
                     {
                         // tell the server we're good to go (later on we'll need a recursive hash check so we make sure we get all the files properly
 
+                        Debug.Log("checking files");
 
                         List<int> filesNeeded = new List<int>();
 
                         foreach (var header in headers)
                         {
-                            if (File.Exists(header.path + "_test.test"))
+                            string filePath = testPath(header.path);
+
+                            if (File.Exists(filePath))
                             {
-                                using (FileStream fs = new FileStream(header.path + "_test.test", FileMode.Open))
+                                using (FileStream fs = new FileStream(filePath, FileMode.Open))
                                 {
-                                    if (fs.sha256() != header.hash)
+
+                                    Debug.Log(Encoding.Unicode.GetString(header.hash) + "  --  Received hash:");
+                                    Debug.Log(Encoding.Unicode.GetString(fs.sha256()) + "  --  File hash:");
+
+                                    if (false && fs.sha256() != header.hash)
                                     {
                                         filesNeeded.Add(header.id);
                                     }
@@ -576,6 +604,11 @@ public class LargeRPC
         return false;
     }
 
+    public string testPath(string _path)
+    {
+        return _path.Insert(_path.Length - 4, "_test");
+    }
+
     public bool PullFilesFromPacket(PooledBitReader reader)
     {
         bool packetProcessed = false;
@@ -589,7 +622,7 @@ public class LargeRPC
 
             Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetProcessed.ToString());
 
-            bytesDownloaded += headers[id].FilePacketBytes();
+            bytesDownloaded += data.Length;
             if (OnProgressUpdated != null) OnProgressUpdated(bytesDownloaded / downloadSize);
 
             numFilesReceived++;
@@ -599,19 +632,24 @@ public class LargeRPC
             if (id != previousFileID)
             {
 
-                if (receptionFileStream != null) receptionFileStream.Dispose();
+                if (receptionFileStream != null)
+                {
+                    receptionFileStreamWriter.Dispose();
+                    receptionFileStream.Dispose();
+                }
 
-                receptionFileStream = File.Open(headers[id].path + "_test.test", FileMode.Append);
+                string filePath = testPath(headers[id].path);
+
+                receptionFileStream = File.Open(filePath, FileMode.Append);
+                receptionFileStreamWriter = new BinaryWriter(receptionFileStream);
             }
 
-            using (StreamWriter sw = new StreamWriter(receptionFileStream))
-            {
-                sw.Write(data);
-            }
+            receptionFileStreamWriter.Write(data);
 
 
             if (allFilesProcessed)
             {
+                receptionFileStreamWriter.Dispose();
                 receptionFileStream.Dispose();
                 return true;
             }
@@ -644,11 +682,13 @@ public class LargeRPC
     // Essentially, when this is passed an empty list, the okay will be sent to the server
     IEnumerator SendNeededFilesListToSender(List<int> _fileIDs)
     {
-        Debug.Log(1111);
+        bool allFilesReceived = _fileIDs.Count == 0;
+
+        Debug.Log("sending needed files, files: " + _fileIDs.Count);
+
         PooledBitStream bitStream = PooledBitStream.Get();
         PooledBitWriter writer = PooledBitWriter.Get(bitStream);
-
-        bool allFilesReceived = _fileIDs.Count == 0;
+        
         if (allFilesReceived)
         {
             writer.WriteBit(true);
@@ -661,8 +701,9 @@ public class LargeRPC
             writer.Dispose();
             _fileIDs.Clear();
 
-            if (OnDownloadComplete != null) OnDownloadComplete(TransmissionState.Receive);
+            if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Receive);
 
+            StopListening();
             ChangeState(LargeRPCState.Idle);
         }
         else
@@ -742,7 +783,7 @@ public class FileHeader
     /// <returns></returns>
     public long CalculateDownloadSize()
     {
-        return HeaderPacketBytes() + FilePacketBytes();
+        return HeaderPacketBytes() + FilePacketsBytes();
     }
 
     public long HeaderPacketBytes()
@@ -750,13 +791,13 @@ public class FileHeader
         return sizeof(int) + Encoding.Unicode.GetByteCount(path) + hash.Length + sizeof(bool);
     }
 
-    public long FilePacketBytes()
+    public long FilePacketsBytes()
     {
         return sizeof(long) + fileSize + sizeof(bool);
     }
 }
 
-public enum TransmissionState { Idle, Send, Receive };
+public enum TransmissionSide { Idle, Send, Receive };
 
 public enum LargeRPCState
 {
