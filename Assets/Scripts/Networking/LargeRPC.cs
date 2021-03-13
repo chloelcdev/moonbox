@@ -55,13 +55,14 @@ public class LargeRPC
     // 64k cap on Unet packets, trying to stick around 32k to be safe
 
     // headers are about 300b/packet depending on file path length
-    public static int headersPerPacket { get => 6000 / 300; }
+    public static int headersPerPacket { get => (1024*6) / 300; }
 
     // file IDs are int32s, they're 4 bytes
-    public static int fileIDsPerPacket { get => 6000 / 4; }
+    public static int fileIDsPerPacket { get => (1024*6) / 4; }
 
     // the size of the pieces are that we actually send over the network
-    int netChunkSize { get => 1024 * 6; }
+    public static int netChunkSize { get => 128; }
+    // 1024 * 6 is old value
 
     // the size of the pieces of file we read into memory at a time when sending are
     int fileChunkSize { get => 1024 * 1024 * 50; }
@@ -173,6 +174,7 @@ public class LargeRPC
                     headers.Add(header);
 
                     fullDownloadSize += header.CalculateDownloadSize();
+                    Debug.Log("headers were " + header.HeaderPacketBytes());
                 }
             }
             else
@@ -320,25 +322,30 @@ public class LargeRPC
                             while (numBytesToRead > 0)
                             {
                                 Debug.Log("still bytes left");
+                                int thisFileChunkSize = fileChunkSize;
+                                thisFileChunkSize = Mathf.Min(thisFileChunkSize, numBytesToRead);
 
-                                byte[] fileChunk = new byte[fileChunkSize];
+                                byte[] fileChunk = new byte[thisFileChunkSize];
+                                
                                 // Read may return anything from 0 to numBytesToRead.
-                                int n = fs.Read(fileChunk, numBytesRead, fileChunkSize);
+                                int n = fs.Read(fileChunk, numBytesRead, thisFileChunkSize);
 
 
 
-                                foreach (byte[] netChunk in fileChunk.Split(netChunkSize))
+                                foreach (byte[] netChunk in fileChunk.Slices(netChunkSize, false))
                                 {
                                     Debug.Log("processing next chunk");
 
                                     // fileID
                                     writer.WriteInt32(header.id);
 
+                                    writer.WriteInt32(netChunk.Length);
+                                    Debug.Log("netchunk len: " + netChunk.Length);
                                     // filedata
                                     writer.WriteByteArray(netChunk);
 
                                     // isLastInPacket
-                                    bool isLastInPacket = bitStream.Length >= netChunkSize;
+                                    bool isLastInPacket = bitStream.Length >= netChunkSize || netChunk.Length < netChunkSize;
                                     writer.WriteBit(isLastInPacket);
 
                                     if (isLastInPacket)
@@ -512,6 +519,7 @@ public class LargeRPC
                     {
                         ChangeState(LargeRPCState.Receive_AwaitingAllFileData);
                         Game.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
+
                     }
                 }
 
@@ -591,6 +599,7 @@ public class LargeRPC
             // if we have a header for every file, move to waiting for file data
             if (headers.Count >= numFilesNeeded)
             {
+                Debug.Log("headers were " + (bytesDownloaded - sizeof(int) - sizeof(long)));
                 return true;
             }
 
@@ -611,18 +620,19 @@ public class LargeRPC
 
     public bool PullFilesFromPacket(PooledBitReader reader)
     {
-        bool packetProcessed = false;
+        bool packetEndHit = false;
 
-        while (!packetProcessed)
+        while (!packetEndHit)
         {
             
             int id = reader.ReadInt32();
-            byte[] data = reader.ReadByteArray();
-            packetProcessed = reader.ReadBit();
+            int dataLen = reader.ReadInt32();
+            byte[] data = reader.ReadByteArray(null);
+            packetEndHit = reader.ReadBit();
 
-            Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetProcessed.ToString());
+            Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
 
-            bytesDownloaded += data.Length;
+            bytesDownloaded += sizeof(int) + sizeof(bool) + data.Length;
             if (OnProgressUpdated != null) OnProgressUpdated(bytesDownloaded / downloadSize);
 
             numFilesReceived++;
@@ -793,7 +803,8 @@ public class FileHeader
 
     public long FilePacketsBytes()
     {
-        return sizeof(long) + fileSize + sizeof(bool);
+        int numberOfChunks = Mathf.CeilToInt(fileSize / LargeRPC.netChunkSize);
+        return (sizeof(long) + sizeof(bool)) * numberOfChunks + fileSize;
     }
 }
 
