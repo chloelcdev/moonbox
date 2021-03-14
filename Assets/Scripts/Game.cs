@@ -1,6 +1,7 @@
 using MLAPI;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -24,15 +25,17 @@ public class Game : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        /* FILE SEND TESTING
+         * 
         if (Keyboard.current.tKey.wasPressedThisFrame) {
             Debug.Log("sending");
-            Test();
+            Test_SendFileToOpenReceiver(2);
         }
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             Debug.Log("listening");
-            TestReceive();
-        }
+            Test_OpenToFileReception();
+        }*/
         if (Keyboard.current.rKey.wasPressedThisFrame)
         {
             Debug.Log(NetworkingManager.Singleton.LocalClientId);
@@ -40,19 +43,19 @@ public class Game : MonoBehaviour
     }
 
 
-    public void Test()
+    public void Test_SendFileToOpenReceiver(ulong _connectedClient)
     {
 #if UNITY_EDITOR
-        string path = UnityEditor.EditorUtility.OpenFilePanel("Choose file to test sending with", "", "*");
+        string path = UnityEditor.EditorUtility.OpenFolderPanel("BE CAREFUL: Choose a folder to test sending with", "", "*");
         if (path.Length != 0)
         {
             LargeRPC download = new LargeRPC("gameDownload");
-            download.SendFiles(new List<string>() { path }, NetworkingManager.Singleton.ConnectedClients[2].ClientId);
+            download.SendFiles(new List<string>(Directory.GetFiles(path)), NetworkingManager.Singleton.ConnectedClients[_connectedClient].ClientId);
         }
 #endif
     }
 
-    public void TestReceive()
+    public void Test_OpenToFileReception()
     {
         LargeRPC download = new LargeRPC("gameDownload");
         download.ListenForDownload();
