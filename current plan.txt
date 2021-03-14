@@ -1,0 +1,17 @@
+add true/false (accept/reject file request) to first packet to client
+add string message to first packet to client
+string message is "ok" if 
+
+[client]
+When player tries to join server send them to "joining..." UI with progress bar
+Create proper Player-accepted-to-server hook
+on Player-accepted-to-server hook:
+ask server what files we need
+wait for response
+if we get a false flag, display the message and go back to title
+if we get a yes flag, start the current download routine
+start and update progress bar on UI with LargeRPC.OnProgressUpdatated
+on LargeRPC.OnComplete, display "spawning world"
+CREATE SPAWN WORLD ROUTINE - maybe just wait for MLAPI to finish
+on world spawn finished, display "starting lua"
+load any lua files in lua/client and lua/server (we'll make this more elaborate later with gamemode folders and stuff)
