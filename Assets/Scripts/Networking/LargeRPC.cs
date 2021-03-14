@@ -11,6 +11,7 @@ using System.Text;
 
 public class LargeRPC
 {
+
     public LargeRPC(string _messageName)
     {
         MessageName = _messageName;
@@ -52,23 +53,7 @@ public class LargeRPC
     /// <summary>
     /// Tells you whether this RPC is Idle, Sending, or Receiving based on the State
     /// </summary>
-    public SendOrReceiveFlag TransmissionSide
-    {
-        get
-        {
-
-            if (State.ToString().Contains("Send_"))
-            {
-                return SendOrReceiveFlag.Send;
-            }
-            else if (State.ToString().Contains("Receive_"))
-            {
-                return SendOrReceiveFlag.Receive;
-            }
-
-            return SendOrReceiveFlag.Idle;
-        }
-    }
+    public SendOrReceiveFlag TransmissionSide { get; private set; }
 
 
     public string MessageName { get; private set; } = "";
@@ -90,7 +75,32 @@ public class LargeRPC
     public void ChangeState(LargeRPCState _state)
     {
         State = _state;
-        Debug.Log(_state.ToString());
+
+        if (State.ToString().Contains("Send_"))
+        {
+            TransmissionSide = SendOrReceiveFlag.Send;
+        }
+        else if (State.ToString().Contains("Receive_"))
+        {
+            TransmissionSide = SendOrReceiveFlag.Receive;
+        }
+        // if it's on compelte just don't change it, it will still have its transmission side set from the operation
+        else if (State != LargeRPCState.Complete)
+        {
+            TransmissionSide = SendOrReceiveFlag.Idle;
+        }
+
+
+        if (TransmissionSide == SendOrReceiveFlag.Receive)
+        {
+            ReceiverID = NetworkingManager.Singleton.LocalClientId;
+        }
+        else if (TransmissionSide == SendOrReceiveFlag.Send)
+        {
+            SenderID = NetworkingManager.Singleton.LocalClientId;
+        }
+
+        Debug.Log("Changing LargeRPC state: " + _state.ToString());
     }
 
     public void Clear()
@@ -439,10 +449,14 @@ public class LargeRPC
 
             if (clientFinished)
             {
+                StopListening();
+
                 ChangeState(LargeRPCState.Complete);
                 Debug.Log("complete");
+
                 if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send);
-                StopListening();
+
+                
             }
 
         }
@@ -472,7 +486,6 @@ public class LargeRPC
     public void ListenForDownload()
     {
         ChangeState(LargeRPCState.Receive_AwaitingFirstPacket);
-        ReceiverID = NetworkingManager.Singleton.LocalClientId;
         CustomMessagingManager.RegisterNamedMessageHandler(MessageName, ReceiveFilesDownloadPieceFromSender);
         Debug.LogError("Started Listening");
     }
@@ -486,11 +499,7 @@ public class LargeRPC
 
                 // allow packets from everyone if this is the server
                 // only allow packets from server otherwise
-                // if it's not from the server and were not the server, bail
-                Debug.Log(NetworkingManager.Singleton.IsHost);
-                Debug.Log(NetworkingManager.Singleton.IsServer);
-                Debug.Log(NetworkingManager.Singleton.ServerClientId);
-                Debug.Log(_senderClientID);
+                // if it's not from the server and we're not the server, bail
 
                 if (!NetworkingManager.Singleton.IsHost && !NetworkingManager.Singleton.IsServer && _senderClientID != NetworkingManager.Singleton.ServerClientId && _senderClientID != NetworkingManager.Singleton.LocalClientId) return;
 
@@ -711,9 +720,10 @@ public class LargeRPC
             writer.Dispose();
             _fileIDs.Clear();
 
+            StopListening();
+
             if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Receive);
 
-            StopListening();
             ChangeState(LargeRPCState.Idle);
         }
         else
@@ -756,7 +766,7 @@ public class LargeRPC
     #endregion
 }
 
-public enum SendOrReceiveFlag { Idle, Send, Receive };
+public enum SendOrReceiveFlag { Idle, Send, Receive, Busy };
 
 public enum LargeRPCState
 {

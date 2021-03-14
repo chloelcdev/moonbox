@@ -9,6 +9,14 @@ using UnityEngine.UIElements;
 using MLAPI.SceneManagement;
 using DG.Tweening;
 using System;
+using MLAPI.Transports.Tasks;
+using MLAPI.Messaging;
+using System.IO;
+
+/// <summary>
+/// This should always be sticking around (DontDestroyOnLoad) 
+/// we always need the information the lobby has (the "scoreboard"/user-list can probably just show info from here)
+/// </summary>
 
 public class LobbyManager : MonoBehaviour
 {
@@ -30,7 +38,35 @@ public class LobbyManager : MonoBehaviour
         return transform;
     }
 
-    
+    void CloseLobbyScreen()
+    {
+        Lobby.transform.DOScale(Vector3.zero, 0.4f).onComplete += () =>
+        {
+            Lobby.SetActive(false);
+        };
+    }
+
+    public void HostServer()
+    {
+        NetworkingManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
+        NetworkingManager.Singleton.StartServer();
+        StartListenForDownloadRequests();
+
+
+    }
+
+    public void HostAndPlay()
+    {
+        NetworkingManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
+        NetworkingManager.Singleton.StartHost();
+
+        StartListenForDownloadRequests();
+
+        NetworkSceneManager.SwitchScene("Game");
+
+        CloseLobbyScreen();
+
+    }
 
     public void JoinServer()
     {
@@ -50,8 +86,6 @@ public class LobbyManager : MonoBehaviour
             }
         }
     }
-
-    
     void JoinServer(string _ip, int _port = 20202, string _password = "")
     {
         if (Transport == null) {
@@ -63,31 +97,69 @@ public class LobbyManager : MonoBehaviour
 
         NetworkingManager.Singleton.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(_password);
         NetworkingManager.Singleton.StartClient();
-        
-    }
-    
-    public void HostServer()
-    {
-        NetworkingManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
-        NetworkingManager.Singleton.StartServer();
+
+        CustomMessagingManager.RegisterNamedMessageHandler("JoinConnectionAccepted", OnJoinConnectionAccepted);
+
     }
 
-    public void HostAndPlay()
+
+    /// <summary>
+    /// Called on the client after the server confirms we passed the approval check
+    /// </summary>
+    /// <param name="sender"></param>
+    /// <param name="payload"></param>
+    private void OnJoinConnectionAccepted(ulong sender, Stream payload)
     {
-        NetworkingManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
-        NetworkingManager.Singleton.StartHost();
-
-        NetworkSceneManager.SwitchScene("Game");
-
-        Lobby.transform.DOScale(Vector3.zero, 0.4f).onComplete += () =>
+        if (NetworkingManager.Singleton.IsConnectedClient)
         {
-            Lobby.SetActive(false);
-        };
+            RequestDownloads();
+        }
+        else
+        {
+            Debug.LogError("You were not connected when you received your acceptance, something is wrong, please let the developers know.");
+        }
+    }
 
+    void RequestDownloads()
+    {
+        LargeRPC download = new LargeRPC("InitialGameDownload");
+        download.ListenForDownload();
+        CustomMessagingManager.SendNamedMessage("DownloadFilesRequest", NetworkingManager.Singleton.ServerClientId, Stream.Null);
+    }
+
+    void StartListenForDownloadRequests()
+    {
+        if (!NetworkingManager.Singleton.IsServer)
+        {
+            Debug.LogError("Only run ListenForDownloadRequests() on the server");
+            return;
+        }
+
+        CustomMessagingManager.RegisterNamedMessageHandler("DownloadFilesRequest", DownloadRequestReceived);
+    }
+
+    Dictionary<ulong, LargeRPC> currentDownloads = new Dictionary<ulong, LargeRPC>();
+    void DownloadRequestReceived(ulong _senderID, Stream _data)
+    {
+        if (currentDownloads.ContainsKey(_senderID))
+        {
+            LargeRPC clientDownload = new LargeRPC("InitialGameDownload");
+            currentDownloads.Add(_senderID, clientDownload);
+            clientDownload.OnDownloadComplete += (SendOrReceiveFlag _flag) => currentDownloads.Remove(_senderID);
+
+            // TODO: Actually send files
+            //clientDownload.SendFiles();
+        }
+    }
+
+    void StopListenForDownloadRequests()
+    {
+        CustomMessagingManager.UnregisterNamedMessageHandler("DownloadFilesRequest");
     }
 
     public void StopHosting()
     {
+        StopListenForDownloadRequests();
         NetworkingManager.Singleton.ConnectionApprovalCallback -= ApprovalCheck;
         Disconnect();
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
@@ -108,6 +180,8 @@ public class LobbyManager : MonoBehaviour
         {
             NetworkingManager.Singleton.StopServer();
         }
+
+        StopListenForDownloadRequests();
     }
 
     public void LoadMainMenu()
@@ -133,5 +207,7 @@ public class LobbyManager : MonoBehaviour
 
         //If approve is true, the connection gets added. If it's false. The client gets disconnected
         callback(createPlayerObject, prefabHash, approve, spawn.position, spawn.rotation);
+
+        CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", clientId, Stream.Null);
     }
 }
