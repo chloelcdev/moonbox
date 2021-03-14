@@ -11,44 +11,15 @@ using System.Text;
 
 public class LargeRPC
 {
-    public string messageName { get; private set; } = "";
-
     public LargeRPC(string _messageName)
     {
-        messageName = _messageName;
+        MessageName = _messageName;
     }
 
-    
     public event Action<float> OnProgressUpdated;
-    public event Action<TransmissionSide> OnDownloadComplete;
+    public event Action<SendOrReceiveFlag> OnDownloadComplete;
 
-    public List<FileHeader> headers { get; private set; } = new List<FileHeader>();
-
-    public long downloadSize { get; private set; }
-
-    /// <summary>
-    /// What exactly this RPC is currently doing, see transmissionState for just Sender/Receiver/Idle
-    /// </summary>
-    public LargeRPCState State { get; private set; }
-
-    /// <summary>
-    /// Tells you whether this RPC is Idle, Sending, or Receiving based on the State
-    /// </summary>
-    public TransmissionSide transmissionSide {
-        get {
-
-            if (State.ToString().Contains("Send_"))
-            {
-                return TransmissionSide.Send;
-            }
-            else if (State.ToString().Contains("Receive_"))
-            {
-                return TransmissionSide.Receive;
-            }
-            
-            return TransmissionSide.Idle;
-        }
-    }
+    public List<FileHeader> Headers { get; private set; } = new List<FileHeader>();
 
 
     #region Constants
@@ -63,21 +34,58 @@ public class LargeRPC
 
     // the size of the pieces are that we actually send over the network - 1024 * 6 is old value
     public const int netChunkSize = 1024 / 8;
-    
+
     // the size of the pieces of file we read into memory at a time when sending
     public const int fileChunkSize = 1024 * 1024 * 50;
 
     #endregion
 
-    
 
+    #region Common Information
+
+
+    /// <summary>
+    /// What exactly this RPC is currently doing, see transmissionState for just Sender/Receiver/Idle
+    /// </summary>
+    public LargeRPCState State { get; private set; }
+
+    /// <summary>
+    /// Tells you whether this RPC is Idle, Sending, or Receiving based on the State
+    /// </summary>
+    public SendOrReceiveFlag TransmissionSide
+    {
+        get
+        {
+
+            if (State.ToString().Contains("Send_"))
+            {
+                return SendOrReceiveFlag.Send;
+            }
+            else if (State.ToString().Contains("Receive_"))
+            {
+                return SendOrReceiveFlag.Receive;
+            }
+
+            return SendOrReceiveFlag.Idle;
+        }
+    }
+
+
+    public string MessageName { get; private set; } = "";
+    public long DownloadSize { get; private set; }
+    public ulong SenderID { get; private set; }
+    public ulong ReceiverID { get; private set; }
+
+    #endregion
+
+
+    #region Common Methods
 
     public void StopListening()
     {
-        CustomMessagingManager.UnregisterNamedMessageHandler(messageName);
+        CustomMessagingManager.UnregisterNamedMessageHandler(MessageName);
         Debug.LogError("Stopped Listening");
     }
-
 
     public void ChangeState(LargeRPCState _state)
     {
@@ -85,10 +93,9 @@ public class LargeRPC
         Debug.Log(_state.ToString());
     }
 
-
     public void Clear()
     {
-        if (transmissionSide != TransmissionSide.Idle)
+        if (TransmissionSide != SendOrReceiveFlag.Idle)
         {
             Debug.Log("Cannot clear LargeRPC until it has finished the current job.");
             return;
@@ -96,15 +103,16 @@ public class LargeRPC
 
         receptionFileStream.Dispose();
         filesToSend.Clear();
-        headers.Clear();
+        Headers.Clear();
 
         numFilesNeeded = 0;
-        downloadSize = 0;
+        DownloadSize = 0;
         previousFileID = -1;
-        senderID = 0;
-        receiverID = 0;
+        SenderID = 0;
+        ReceiverID = 0;
     }
 
+    #endregion
 
 
     #region Sender
@@ -138,7 +146,7 @@ public class LargeRPC
             yield break;
         }
 
-        receiverID = _clientID;
+        ReceiverID = _clientID;
 
         ChangeState(LargeRPCState.Send_SendingHeaders);
 
@@ -165,13 +173,13 @@ public class LargeRPC
                 using (FileStream fs = File.Open(path, FileMode.Open))
                 {
                     Debug.Log(fs.Name);
-                    int id = headers.Count;
+                    int id = Headers.Count;
                     byte[] fileHash = fs.sha256();
 
                     FileHeader header = new FileHeader(id, path, fileHash, fs.Length);
-                    headers.Add(header);
+                    Headers.Add(header);
 
-                    downloadSize += header.fileSize;
+                    DownloadSize += header.fileSize;
                 }
             }
             else
@@ -188,16 +196,16 @@ public class LargeRPC
         PooledBitWriter writer = PooledBitWriter.Get(bitStream);
 
         // fileCount
-        writer.WriteInt32(headers.Count);
+        writer.WriteInt32(Headers.Count);
 
         // downloadSize
-        writer.WriteInt64(downloadSize);
+        writer.WriteInt64(DownloadSize);
 
         
         var headersThisPacket = 0;
         var packetsSent = 0;
         Debug.Log("Sending headers");
-        foreach (var header in headers)
+        foreach (var header in Headers)
         {
             Debug.Log(headersThisPacket + "          " + packetsSent);
 
@@ -219,7 +227,7 @@ public class LargeRPC
             // fileLength
             writer.WriteInt64(header.fileSize);
 
-            bool isLastPacket = id >= headers.Count - 1;
+            bool isLastPacket = id >= Headers.Count - 1;
 
             // send it off if we've filled up a packet
             if (headersThisPacket >= headersPerPacket || isLastPacket)
@@ -230,7 +238,7 @@ public class LargeRPC
 
                 
 
-                CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
+                CustomMessagingManager.SendNamedMessage(MessageName, _clientID, bitStream, "MLAPI_INTERNAL");
 
                 /* headers are pretty small, they really don't need the receiver to check in here unless it becomes a problem
                 
@@ -304,7 +312,7 @@ public class LargeRPC
                 bitStream = PooledBitStream.Get();
                 writer = PooledBitWriter.Get(bitStream);
 
-                foreach (var header in headers)
+                foreach (var header in Headers)
                 {
                     Debug.Log("processing header");
                     if (File.Exists(header.path) && filesToSend.Contains(header.id))
@@ -349,7 +357,7 @@ public class LargeRPC
                                     if (isLastInPacket)
                                     {
 
-                                        CustomMessagingManager.SendNamedMessage(messageName, _clientID, bitStream, "MLAPI_INTERNAL");
+                                        CustomMessagingManager.SendNamedMessage(MessageName, _clientID, bitStream, "MLAPI_INTERNAL");
                                         Debug.Log("packet sent");
 
                                         yield return new WaitForSeconds(1 / 14);
@@ -398,7 +406,7 @@ public class LargeRPC
         StopListening();
 
         Debug.Log("files sent");
-        if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Send);
+        if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send);
 
         ChangeState(LargeRPCState.Idle);
 
@@ -408,7 +416,7 @@ public class LargeRPC
 
     public void ListenForFilesNeededListOrCompletion()
     {
-        CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveFilesNeededListFromReceiver);
+        CustomMessagingManager.RegisterNamedMessageHandler(MessageName, ReceiveFilesNeededListFromReceiver);
         Debug.LogError("Started Listening");
     }
 
@@ -433,7 +441,7 @@ public class LargeRPC
             {
                 ChangeState(LargeRPCState.Complete);
                 Debug.Log("complete");
-                if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Send);
+                if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send);
                 StopListening();
             }
 
@@ -443,12 +451,7 @@ public class LargeRPC
     #endregion
 
 
-
-
     #region Receiver
-
-    public ulong senderID { get; private set; }
-    public ulong receiverID { get; private set; }
 
     public int numFilesNeeded { get; private set; }
     public int numFilesReceived { get; private set; }
@@ -469,8 +472,8 @@ public class LargeRPC
     public void ListenForDownload()
     {
         ChangeState(LargeRPCState.Receive_AwaitingFirstPacket);
-        receiverID = NetworkingManager.Singleton.LocalClientId;
-        CustomMessagingManager.RegisterNamedMessageHandler(messageName, ReceiveFilesDownloadPieceFromSender);
+        ReceiverID = NetworkingManager.Singleton.LocalClientId;
+        CustomMessagingManager.RegisterNamedMessageHandler(MessageName, ReceiveFilesDownloadPieceFromSender);
         Debug.LogError("Started Listening");
     }
 
@@ -495,11 +498,11 @@ public class LargeRPC
                 // receive first packet
                 using (PooledBitReader reader = PooledBitReader.Get(_stream))
                 {
-                    senderID = _senderClientID;
+                    SenderID = _senderClientID;
 
                     // grab out these two before we send the packet to the header grabbing loop
                     numFilesNeeded = reader.ReadInt32();
-                    downloadSize = reader.ReadInt64();
+                    DownloadSize = reader.ReadInt64();
                 }
 
                 ChangeState(LargeRPCState.Receive_AwaitingAllHeaders);
@@ -539,7 +542,7 @@ public class LargeRPC
 
                         List<int> filesNeeded = new List<int>();
 
-                        foreach (var header in headers)
+                        foreach (var header in Headers)
                         {
                             string filePath = testPath(header.path);
 
@@ -591,11 +594,11 @@ public class LargeRPC
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
             Debug.LogError("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
             
-            if (OnProgressUpdated!=null) OnProgressUpdated(fileBytesReceived / downloadSize);
-            headers.Add(header);
+            if (OnProgressUpdated!=null) OnProgressUpdated(fileBytesReceived / DownloadSize);
+            Headers.Add(header);
 
             // if we have a header for every file, move to waiting for file data
-            if (headers.Count >= numFilesNeeded)
+            if (Headers.Count >= numFilesNeeded)
             {
                 return true;
             }
@@ -630,11 +633,11 @@ public class LargeRPC
             Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
 
             fileBytesReceived += data.Length;
-            if (OnProgressUpdated != null) OnProgressUpdated(fileBytesReceived / downloadSize);
+            if (OnProgressUpdated != null) OnProgressUpdated(fileBytesReceived / DownloadSize);
 
             numFilesReceived++;
-            Debug.Log(fileBytesReceived + "   /   " + downloadSize);
-            bool allFilesProcessed = fileBytesReceived >= downloadSize;
+            Debug.Log(fileBytesReceived + "   /   " + DownloadSize);
+            bool allFilesProcessed = fileBytesReceived >= DownloadSize;
 
             if (id != previousFileID)
             {
@@ -645,7 +648,7 @@ public class LargeRPC
                     receptionFileStream.Dispose();
                 }
 
-                string filePath = testPath(headers[id].path);
+                string filePath = testPath(Headers[id].path);
 
                 receptionFileStream = File.Open(filePath, FileMode.Append);
                 receptionFileStreamWriter = new BinaryWriter(receptionFileStream);
@@ -674,7 +677,7 @@ public class LargeRPC
 
         int i = 0;
         // TODO: compare hashes using binarys system and only add ones that we need, for now just put in everything
-        foreach (var header in headers)
+        foreach (var header in Headers)
         {
             i++;
             // TODO: use header.hash to figure out if we need each file. This allows us to dump a ton of downloaded files together (maybe separating by lua, model, material, for convenience) and get them no matter
@@ -702,13 +705,13 @@ public class LargeRPC
             writer.WriteIntArray(_fileIDs.ToArray());
             writer.WriteBit(true);
 
-            CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
+            CustomMessagingManager.SendNamedMessage(MessageName, SenderID, bitStream, "MLAPI_INTERNAL");
 
             bitStream.Dispose();
             writer.Dispose();
             _fileIDs.Clear();
 
-            if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Receive);
+            if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Receive);
 
             StopListening();
             ChangeState(LargeRPCState.Idle);
@@ -729,7 +732,7 @@ public class LargeRPC
                     writer.WriteIntArray(_fileIDs.ToArray());
                     writer.WriteBit(false);
 
-                    CustomMessagingManager.SendNamedMessage(messageName, senderID, bitStream, "MLAPI_INTERNAL");
+                    CustomMessagingManager.SendNamedMessage(MessageName, SenderID, bitStream, "MLAPI_INTERNAL");
 
                     bitStream.Dispose();
                     writer.Dispose();
@@ -753,53 +756,7 @@ public class LargeRPC
     #endregion
 }
 
-
-
-public class FileHeader
-{
-    public FileHeader(int _id, string _path, byte[] _hash, long _size)
-    {
-        id = _id;
-        path = _path;
-        hash = _hash;
-        fileSize = _size;
-    }
-
-    public int id;
-    public string path;
-    public byte[] hash;
-
-    /// <summary>
-    /// length of the file in bytes
-    /// </summary>
-    public long fileSize;
-
-    /// <summary>
-    /// 
-    /// int fileID 4 bytes - for each header packet
-    /// string filename varsize - for each header packet
-    /// byte[256] hash 256 bytes - for each header packet
-    /// long fileLength 8 bytes - for each header packet
-    /// bool isLastInPacket byte - for each header packet
-    /// 
-    /// int fileID 4 bytes - for each file packet
-    /// byte[var] filedata - for each file packet
-    /// bool isLastInPacket byte - for each file packet
-    /// 
-    /// </summary>
-    /// <returns></returns>
-    public long CalculateDownloadSize()
-    {
-        return HeaderPacketBytes() + fileSize;
-    }
-
-    public long HeaderPacketBytes()
-    {
-        return sizeof(int) + Encoding.Unicode.GetByteCount(path) + hash.Length + sizeof(bool);
-    }
-}
-
-public enum TransmissionSide { Idle, Send, Receive };
+public enum SendOrReceiveFlag { Idle, Send, Receive };
 
 public enum LargeRPCState
 {
