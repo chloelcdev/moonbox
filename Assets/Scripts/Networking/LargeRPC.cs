@@ -141,8 +141,6 @@ public class LargeRPC
 
         #region comment -- header sizes
         /* -- Header sizes --
-        * Make sure this is ALWAYS matching in the fullDownloadSize. If we just add an int or something it's only going to be off by 4 bytes and that's fine, but it's obviously best if it's accurate
-        * 
         * packet 1
         * int fileCount 4b | long downloadSize 8b | <start headers>
         * 
@@ -156,8 +154,7 @@ public class LargeRPC
 
         #region Grab Download Information
 
-        // filecount and download size are be accounted for here
-        long fullDownloadSize = sizeof(int) + sizeof(long);
+        long fullDownloadSize = 0;
         
         // grab info for headers
         foreach (var path in _paths)
@@ -173,8 +170,7 @@ public class LargeRPC
                     FileHeader header = new FileHeader(id, path, fileHash, fs.Length);
                     headers.Add(header);
 
-                    fullDownloadSize += header.CalculateDownloadSize();
-                    Debug.Log("headers were " + header.HeaderPacketBytes());
+                    fullDownloadSize += header.fileSize;
                 }
             }
             else
@@ -301,6 +297,7 @@ public class LargeRPC
             if (filesNeededByRecipient.Count > 0)
             {
                 Debug.Log("client still needs more files, sending");
+
                 #region send files
 
                 bitStream = PooledBitStream.Get();
@@ -339,13 +336,13 @@ public class LargeRPC
                                     // fileID
                                     writer.WriteInt32(header.id);
 
-                                    writer.WriteInt32(netChunk.Length);
+                                    //writer.WriteInt32(netChunk.Length);
                                     Debug.Log("netchunk len: " + netChunk.Length);
                                     // filedata
                                     writer.WriteByteArray(netChunk);
 
-                                    // isLastInPacket
-                                    bool isLastInPacket = bitStream.Length >= netChunkSize || netChunk.Length < netChunkSize;
+                                    // isLastInPacket, need to add in its own size
+                                    bool isLastInPacket = bitStream.Length+1 >= netChunkSize || netChunk.Length < netChunkSize;
                                     writer.WriteBit(isLastInPacket);
 
                                     if (isLastInPacket)
@@ -368,7 +365,7 @@ public class LargeRPC
                                 // Break when the end of the file is reached.
                                 if (n == 0)
                                 {
-                                    Debug.Log("end of file reached");
+                                    Debug.Log("end of file reached, this is a failsafe");
                                     break;
                                 }
 
@@ -392,14 +389,14 @@ public class LargeRPC
                 ChangeState(LargeRPCState.Send_EnsuringIntegrity);
             }
 
-            Debug.Log("Waiting 2 seconds before checking completion again");
-            yield return new WaitForSeconds(2f);
+            Debug.Log("Waiting before checking completion again");
+            yield return new WaitForSeconds(1f);
         
         }
 
         StopListening();
 
-        Debug.Log("complete");
+        Debug.Log("files sent");
         if (OnDownloadComplete != null) OnDownloadComplete(TransmissionSide.Send);
 
         ChangeState(LargeRPCState.Idle);
@@ -499,9 +496,6 @@ public class LargeRPC
                     // grab out these two before we send the packet to the header grabbing loop
                     numFilesNeeded = reader.ReadInt32();
                     downloadSize = reader.ReadInt64();
-
-                    // account for the downloadSize and fileCount
-                    bytesDownloaded += sizeof(int) + sizeof(long);
                 }
 
                 ChangeState(LargeRPCState.Receive_AwaitingAllHeaders);
@@ -592,14 +586,13 @@ public class LargeRPC
 
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
             Debug.LogError("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
-            bytesDownloaded += header.HeaderPacketBytes();
+            
             if (OnProgressUpdated!=null) OnProgressUpdated(bytesDownloaded / downloadSize);
             headers.Add(header);
 
             // if we have a header for every file, move to waiting for file data
             if (headers.Count >= numFilesNeeded)
             {
-                Debug.Log("headers were " + (bytesDownloaded - sizeof(int) - sizeof(long)));
                 return true;
             }
 
@@ -626,13 +619,13 @@ public class LargeRPC
         {
             
             int id = reader.ReadInt32();
-            int dataLen = reader.ReadInt32();
+            //int dataLen = reader.ReadInt32();
             byte[] data = reader.ReadByteArray(null);
             packetEndHit = reader.ReadBit();
 
             Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
 
-            bytesDownloaded += sizeof(int) + sizeof(bool) + data.Length;
+            bytesDownloaded += data.Length;
             if (OnProgressUpdated != null) OnProgressUpdated(bytesDownloaded / downloadSize);
 
             numFilesReceived++;
@@ -793,18 +786,12 @@ public class FileHeader
     /// <returns></returns>
     public long CalculateDownloadSize()
     {
-        return HeaderPacketBytes() + FilePacketsBytes();
+        return HeaderPacketBytes() + fileSize;
     }
 
     public long HeaderPacketBytes()
     {
         return sizeof(int) + Encoding.Unicode.GetByteCount(path) + hash.Length + sizeof(bool);
-    }
-
-    public long FilePacketsBytes()
-    {
-        int numberOfChunks = Mathf.CeilToInt(fileSize / LargeRPC.netChunkSize);
-        return (sizeof(long) + sizeof(bool)) * numberOfChunks + fileSize;
     }
 }
 
