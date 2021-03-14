@@ -98,6 +98,7 @@ public class LobbyManager : MonoBehaviour
         NetworkingManager.Singleton.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(_password);
         NetworkingManager.Singleton.StartClient();
 
+        Debug.Log("registered JoinConnectionAccepted");
         CustomMessagingManager.RegisterNamedMessageHandler("JoinConnectionAccepted", OnJoinConnectionAccepted);
 
     }
@@ -110,25 +111,31 @@ public class LobbyManager : MonoBehaviour
     /// <param name="payload"></param>
     private void OnJoinConnectionAccepted(ulong sender, Stream payload)
     {
-        if (NetworkingManager.Singleton.IsConnectedClient)
-        {
-            RequestDownloads();
-        }
-        else
-        {
-            Debug.LogError("You were not connected when you received your acceptance, something is wrong, please let the developers know.");
-        }
+        Debug.Log("Connection was accepted");
+        RequestDownloads();
     }
 
     void RequestDownloads()
     {
+        Debug.Log("Requesting downloads");
         LargeRPC download = new LargeRPC("InitialGameDownload");
         download.ListenForDownload();
+        download.OnDownloadComplete += FinishedDownloadingFromHost;
         CustomMessagingManager.SendNamedMessage("DownloadFilesRequest", NetworkingManager.Singleton.ServerClientId, Stream.Null);
+    }
+
+    void FinishedDownloadingFromHost(SendOrReceiveFlag _flag, ulong _serverClientID)
+    {
+        Debug.Log("Finished downloading files");
+
+        Debug.Log("this is where we load lua :)");
+
+        Debug.Log("this is where we spawn the player object :)");
     }
 
     void StartListenForDownloadRequests()
     {
+        Debug.Log("Listening for download requests");
         if (!NetworkingManager.Singleton.IsServer)
         {
             Debug.LogError("Only run ListenForDownloadRequests() on the server");
@@ -138,18 +145,29 @@ public class LobbyManager : MonoBehaviour
         CustomMessagingManager.RegisterNamedMessageHandler("DownloadFilesRequest", DownloadRequestReceived);
     }
 
-    Dictionary<ulong, LargeRPC> currentDownloads = new Dictionary<ulong, LargeRPC>();
-    void DownloadRequestReceived(ulong _senderID, Stream _data)
+    Dictionary<ulong, LargeRPC> inProgressDownloads = new Dictionary<ulong, LargeRPC>();
+    void DownloadRequestReceived(ulong _requesterClientID, Stream _data)
     {
-        if (currentDownloads.ContainsKey(_senderID))
+        Debug.Log("Received download request from sender " + _requesterClientID);
+
+        if (!inProgressDownloads.ContainsKey(_requesterClientID))
         {
             LargeRPC clientDownload = new LargeRPC("InitialGameDownload");
-            currentDownloads.Add(_senderID, clientDownload);
-            clientDownload.OnDownloadComplete += (SendOrReceiveFlag _flag) => currentDownloads.Remove(_senderID);
+            inProgressDownloads.Add(_requesterClientID, clientDownload);
+            clientDownload.OnDownloadComplete += ClientFinishedDownload;
 
             // TODO: Actually send files
-            //clientDownload.SendFiles();
+            clientDownload.SendFolder(@"C:\Users\Richard\Pictures\moonbox_files_testing", _requesterClientID);
         }
+        else
+        {
+            Debug.LogError("User " + _requesterClientID + " is already downloading, ignoring request");
+        }
+    }
+
+    void ClientFinishedDownload(SendOrReceiveFlag _flag, ulong _clientID) {
+        Debug.Log("client " + _clientID + " has finished downloading files");
+        inProgressDownloads.Remove(_clientID);
     }
 
     void StopListenForDownloadRequests()
@@ -193,7 +211,7 @@ public class LobbyManager : MonoBehaviour
     {
         //Your logic here
         bool approve = true;
-        bool createPlayerObject = true;
+        bool createPlayerObject = false;
 
         print("Client " + clientId + " is being approved.");
 

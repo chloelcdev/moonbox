@@ -18,7 +18,7 @@ public class LargeRPC
     }
 
     public event Action<float> OnProgressUpdated;
-    public event Action<SendOrReceiveFlag> OnDownloadComplete;
+    public event Action<SendOrReceiveFlag, ulong> OnDownloadComplete;
 
     public List<FileHeader> Headers { get; private set; } = new List<FileHeader>();
 
@@ -138,16 +138,30 @@ public class LargeRPC
     }
     public void SendFiles(List<string> _paths, ulong _clientID)
     {
+        SendFiles(_paths.ToArray(), _clientID);
+    }
+    public void SendFiles(string[] _paths, ulong _clientID)
+    {
         Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
     }
-
+    public void SendFolder(string _path, ulong _clientID)
+    {
+        if (Directory.Exists(_path))
+        {
+            SendFiles(Directory.GetFiles(_path), _clientID);
+        }
+        else
+        {
+            Debug.LogError("Folder not found");
+        }
+    }
 
     /// <summary>
     /// this function splits FILES into MEMORY SAFE sized chunks and safely sends one before starting another
     /// 
     /// files receipient needs to receive the same number of headers with each header packet (packet 1 counts as a header packet)
     /// </summary>
-    public IEnumerator SendFilesDownloadRoutine(List<string> _paths, ulong _clientID)
+    public IEnumerator SendFilesDownloadRoutine(string[] _paths, ulong _clientID)
     {
         Debug.Log("coroutine started");
         if (State != LargeRPCState.Idle)
@@ -416,7 +430,7 @@ public class LargeRPC
         StopListening();
 
         Debug.Log("files sent");
-        if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send);
+        if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send, ReceiverID);
 
         ChangeState(LargeRPCState.Idle);
 
@@ -454,7 +468,7 @@ public class LargeRPC
                 ChangeState(LargeRPCState.Complete);
                 Debug.Log("complete");
 
-                if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send);
+                if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Send, ReceiverID);
 
                 
             }
@@ -722,7 +736,7 @@ public class LargeRPC
 
             StopListening();
 
-            if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Receive);
+            if (OnDownloadComplete != null) OnDownloadComplete(SendOrReceiveFlag.Receive, SenderID);
 
             ChangeState(LargeRPCState.Idle);
         }
