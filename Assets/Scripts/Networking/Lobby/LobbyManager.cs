@@ -118,7 +118,7 @@ public class LobbyManager : MonoBehaviour
     void RequestDownloads()
     {
 
-        ProgressUI.SetMessage("Downloading headers", "Waiting on first packet...");
+        ProgressUI.SetMessage("Downloading files", "Waiting for headers...");
         ProgressUI.Show();
 
         Debug.Log("Requesting downloads");
