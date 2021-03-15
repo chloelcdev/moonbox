@@ -3,8 +3,24 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using DG.Tweening;
+
 public static class MoonboxExtensions
 {
+
+    public static void AnimatedUIClose(this Transform _t)
+    {
+        _t.DOScale(Vector3.zero, 0.4f).onComplete += () =>
+        {
+            _t.gameObject.SetActive(false);
+        };
+    }
+
+    public static void AnimatedUIOpen(this Transform _t)
+    {
+        _t.gameObject.SetActive(true);
+        _t.DOScale(Vector3.one, 0.4f);
+    }
 
     public static byte[] sha256(this byte[] _bytes)
     {

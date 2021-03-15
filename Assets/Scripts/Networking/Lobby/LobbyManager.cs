@@ -117,16 +117,32 @@ public class LobbyManager : MonoBehaviour
 
     void RequestDownloads()
     {
+
+        ProgressUI.SetMessage("Downloading files", "Waiting for headers...");
+        ProgressUI.Show();
+
         Debug.Log("Requesting downloads");
         LargeRPC download = new LargeRPC("InitialGameDownload");
         download.ListenForDownload();
         download.OnDownloadComplete += FinishedDownloadingFromHost;
+        download.OnProgressUpdated += UpdateProgressBar;
+        
         CustomMessagingManager.SendNamedMessage("DownloadFilesRequest", NetworkingManager.Singleton.ServerClientId, Stream.Null);
+    }
+
+    void UpdateProgressBar(float _progress, string _info)
+    {
+        ProgressUI.SetProgess(_progress);
+        ProgressUI.SetInfo(_info);
     }
 
     void FinishedDownloadingFromHost(SendOrReceiveFlag _flag, ulong _serverClientID)
     {
         Debug.Log("Finished downloading files");
+
+        ProgressUI.Hide();
+
+        CloseLobbyScreen();
 
         Debug.Log("this is where we load lua :)");
 

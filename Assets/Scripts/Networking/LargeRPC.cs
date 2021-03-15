@@ -17,7 +17,7 @@ public class LargeRPC
         MessageName = _messageName;
     }
 
-    public event Action<float> OnProgressUpdated;
+    public event Action<float, string> OnProgressUpdated;
     public event Action<SendOrReceiveFlag, ulong> OnDownloadComplete;
 
     public List<FileHeader> Headers { get; private set; } = new List<FileHeader>();
@@ -34,7 +34,7 @@ public class LargeRPC
     public const int fileIDsPerPacket = (1024 * 6) / 4;
 
     // the size of the pieces are that we actually send over the network - 1024 * 6 is old value
-    public const int netChunkSize = 1024 / 8;
+    public const int netChunkSize = 1024;
 
     // the size of the pieces of file we read into memory at a time when sending
     public const int fileChunkSize = 1024 * 1024 * 50;
@@ -199,6 +199,7 @@ public class LargeRPC
                     Debug.Log(fs.Name);
                     int id = Headers.Count;
                     byte[] fileHash = fs.sha256();
+                    yield return new WaitForEndOfFrame();
 
                     FileHeader header = new FileHeader(id, path, fileHash, fs.Length);
                     Headers.Add(header);
@@ -617,7 +618,7 @@ public class LargeRPC
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
             Debug.LogError("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
             
-            if (OnProgressUpdated!=null) OnProgressUpdated(fileBytesReceived / DownloadSize);
+            if (OnProgressUpdated!=null) OnProgressUpdated((float)id / (float)numFilesNeeded, "Receiving headers " + id);
             Headers.Add(header);
 
             // if we have a header for every file, move to waiting for file data
@@ -638,7 +639,13 @@ public class LargeRPC
 
     public string testPath(string _path)
     {
-        return _path.Insert(_path.Length - 4, "_test");
+        string directory = Path.GetDirectoryName(_path) + @"\";
+        string filename = Path.GetFileNameWithoutExtension(_path);
+        string extension = Path.GetExtension(_path);
+
+        string testPath = directory + filename + "_test" + extension;
+        Debug.Log("testpath: " + testPath);
+        return testPath;
     }
 
     public bool PullFilesFromPacket(PooledBitReader reader)
@@ -653,10 +660,13 @@ public class LargeRPC
             byte[] data = reader.ReadByteArray(null);
             packetEndHit = reader.ReadBit();
 
+            float progress = (float)fileBytesReceived / (float)DownloadSize;
+
             Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
 
             fileBytesReceived += data.Length;
-            if (OnProgressUpdated != null) OnProgressUpdated(fileBytesReceived / DownloadSize);
+            Debug.LogWarning("internal prog: " + progress + "     -     " + fileBytesReceived + "/" + DownloadSize);
+            if (OnProgressUpdated != null) OnProgressUpdated(progress, "Receiving file: "+ Headers[id].path);
 
             numFilesReceived++;
             Debug.Log(fileBytesReceived + "   /   " + DownloadSize);
