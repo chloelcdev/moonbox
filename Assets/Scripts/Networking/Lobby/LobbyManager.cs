@@ -144,6 +144,8 @@ public class LobbyManager : MonoBehaviour
 
         CloseLobbyScreen();
 
+        Debug.Log("this is where we load the world :)");
+
         Debug.Log("this is where we load lua :)");
 
         Debug.Log("this is where we spawn the player object :)");

@@ -9,12 +9,26 @@ using System.IO;
 using MLAPI.Serialization.Pooled;
 using System.Text;
 
-public class LargeRPC
+public class LargeRPC : IDisposable
 {
 
     public LargeRPC(string _messageName)
     {
         MessageName = _messageName;
+    }
+
+
+    Coroutine sendFilesDownloadCoroutine;
+    Coroutine sendNeededFilesListToSender;
+
+    public void Dispose()
+    {
+        Game.Instance.StopCoroutine(sendFilesDownloadCoroutine);
+        Game.Instance.StopCoroutine(sendNeededFilesListToSender);
+        StopListening();
+        Headers = null;
+        OnProgressUpdated = null;
+        OnDownloadComplete = null;
     }
 
     public event Action<float, string> OnProgressUpdated;
@@ -142,7 +156,7 @@ public class LargeRPC
     }
     public void SendFiles(string[] _paths, ulong _clientID)
     {
-        Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
+        sendFilesDownloadCoroutine = Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
     }
     public void SendFolder(string _path, ulong _clientID)
     {
@@ -543,7 +557,7 @@ public class LargeRPC
                     if (PullHeadersFromPacket(reader))
                     {
                         ChangeState(LargeRPCState.Receive_AwaitingAllFileData);
-                        Game.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
+                        sendNeededFilesListToSender = Game.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
 
                     }
                 }
@@ -574,11 +588,12 @@ public class LargeRPC
                             {
                                 using (FileStream fs = new FileStream(filePath, FileMode.Open))
                                 {
+                                    byte[] hash = fs.sha256();
 
-                                    Debug.Log(Encoding.Unicode.GetString(header.hash) + "  --  Received hash:");
-                                    Debug.Log(Encoding.Unicode.GetString(fs.sha256()) + "  --  File hash:");
+                                    Debug.Log(header.hash.toHex() + "  --  Received hash:");
+                                    Debug.Log(hash.toHex() + "  --  File hash:");
 
-                                    if (false && fs.sha256() != header.hash)
+                                    if (hash != header.hash)
                                     {
                                         filesNeeded.Add(header.id);
                                     }
@@ -591,7 +606,7 @@ public class LargeRPC
                         }
 
 
-                        Game.Instance.StartCoroutine(SendNeededFilesListToSender(filesNeeded));
+                        sendNeededFilesListToSender = Game.Instance.StartCoroutine(SendNeededFilesListToSender(filesNeeded));
 
 
                         
