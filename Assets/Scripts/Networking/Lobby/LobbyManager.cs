@@ -50,9 +50,12 @@ public class LobbyManager : MonoBehaviour
     {
         NetworkingManager.Singleton.ConnectionApprovalCallback += ApprovalCheck;
         NetworkingManager.Singleton.StartServer();
+
         StartListenForDownloadRequests();
 
+        NetworkSceneManager.SwitchScene("Game");
 
+        CloseLobbyScreen();
     }
 
     public void HostAndPlay()
@@ -229,20 +232,20 @@ public class LobbyManager : MonoBehaviour
     {
         //Your logic here
         bool approve = true;
-        bool createPlayerObject = false;
+        bool createPlayerObject = true;
 
         print("Client " + clientId + " is being approved.");
 
         // The prefab hash. Use null to use the default player prefab
         // If using this hash, replace "MyPrefabHashGenerator" with the name of a prefab added to the NetworkedPrefabs field of your NetworkingManager object in the scene
-        ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("GamePlayer");
+        //ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("Player");
 
         Transform spawn = GetSpawnPosition();
 
         // probably send lua here
 
         //If approve is true, the connection gets added. If it's false. The client gets disconnected
-        callback(createPlayerObject, prefabHash, approve, spawn.position, spawn.rotation);
+        callback(createPlayerObject, null, approve, spawn.position, spawn.rotation);
 
         CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", clientId, Stream.Null);
     }

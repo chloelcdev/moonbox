@@ -608,7 +608,8 @@ public class LargeRPC : IDisposable
 
                                     if (hash != header.hash)
                                     {
-                                        filesNeeded.Add(header.id);
+                                        Debug.Log("hashes not equal");
+                                        //filesNeeded.Add(header.id);
                                     }
                                 }
                             }
@@ -715,6 +716,7 @@ public class LargeRPC : IDisposable
                 receptionFileStreamWriter = new BinaryWriter(receptionFileStream);
             }
 
+            
             receptionFileStreamWriter.Write(data);
 
 
@@ -743,8 +745,11 @@ public class LargeRPC : IDisposable
             i++;
             // TODO: use header.hash to figure out if we need each file. This allows us to dump a ton of downloaded files together (maybe separating by lua, model, material, for convenience) and get them no matter
 
-            // we're just adding all of them without question for now
-            fileIDs.Add(header.id);
+            // we're just adding all of them without question for now (except test files)
+            if (!header.path.Contains("_test"))
+            {
+                fileIDs.Add(header.id);
+            }
         }
 
         return fileIDs;
