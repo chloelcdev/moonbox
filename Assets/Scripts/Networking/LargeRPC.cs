@@ -220,6 +220,9 @@ public class LargeRPC : IDisposable
 
                     DownloadSize += header.fileSize;
                 }
+
+                // let it exit if it needs to, giving StopRoutine() a chance
+                yield return 0;
             }
             else
             {
@@ -246,6 +249,10 @@ public class LargeRPC : IDisposable
         Debug.Log("Sending headers");
         foreach (var header in Headers)
         {
+
+            // let it exit if it needs to, giving StopRoutine() a chance
+            yield return 0;
+
             Debug.Log(headersThisPacket + "          " + packetsSent);
 
             var path = header.path;
@@ -327,6 +334,9 @@ public class LargeRPC : IDisposable
         // loop start
         while (State != LargeRPCState.Complete)
         {
+            // let it exit if it needs to, giving StopRoutine() a chance
+            yield return 0;
+
             Debug.Log("Not done, running not-complete loop");
             #region wait for needed files list
 
@@ -353,6 +363,9 @@ public class LargeRPC : IDisposable
 
                 foreach (var header in Headers)
                 {
+                    // let it exit if it needs to, giving StopRoutine() a chance
+                    yield return 0;
+
                     Debug.Log("processing header");
                     if (File.Exists(header.path) && filesToSend.Contains(header.id))
                     {
