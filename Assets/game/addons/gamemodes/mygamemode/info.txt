@@ -1,0 +1,8 @@
+[Type]
+Gamemode
+
+[Name]
+SuperGamemode
+
+[Version]
+1

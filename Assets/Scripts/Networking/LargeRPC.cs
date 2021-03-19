@@ -23,8 +23,8 @@ public class LargeRPC : IDisposable
 
     public void Dispose()
     {
-        Game.Instance.StopCoroutine(sendFilesDownloadCoroutine);
-        Game.Instance.StopCoroutine(sendNeededFilesListToSender);
+        MainController.Instance.StopCoroutine(sendFilesDownloadCoroutine);
+        MainController.Instance.StopCoroutine(sendNeededFilesListToSender);
         StopListening();
         Headers = null;
         OnProgressUpdated = null;
@@ -156,7 +156,7 @@ public class LargeRPC : IDisposable
     }
     public void SendFiles(string[] _paths, ulong _clientID)
     {
-        sendFilesDownloadCoroutine = Game.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
+        sendFilesDownloadCoroutine = MainController.Instance.StartCoroutine(SendFilesDownloadRoutine(_paths, _clientID));
     }
     public void SendFolder(string _path, ulong _clientID)
     {
@@ -570,7 +570,7 @@ public class LargeRPC : IDisposable
                     if (PullHeadersFromPacket(reader))
                     {
                         ChangeState(LargeRPCState.Receive_AwaitingAllFileData);
-                        sendNeededFilesListToSender = Game.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
+                        sendNeededFilesListToSender = MainController.Instance.StartCoroutine(SendNeededFilesListToSender(GetNeededFiles()));
 
                     }
                 }
@@ -620,7 +620,7 @@ public class LargeRPC : IDisposable
                         }
 
 
-                        sendNeededFilesListToSender = Game.Instance.StartCoroutine(SendNeededFilesListToSender(filesNeeded));
+                        sendNeededFilesListToSender = MainController.Instance.StartCoroutine(SendNeededFilesListToSender(filesNeeded));
 
 
                         

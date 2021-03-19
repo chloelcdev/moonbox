@@ -1,0 +1,8 @@
+[Type]
+Gamemode
+
+[Name]
+Totally Different Gamemode
+
+[Version]
+1

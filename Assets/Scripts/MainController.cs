@@ -5,9 +5,9 @@ using System.IO;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Game : MonoBehaviour
+public class MainController : MonoBehaviour
 {
-    public static Game Instance;
+    public static MainController Instance;
 
     void Awake()
     {
@@ -18,8 +18,7 @@ public class Game : MonoBehaviour
     void Start()
     {
         DontDestroyOnLoad(gameObject);
-
-
+        ProtoFileMap.MakeNewFileMap();
     }
 
     // Update is called once per frame
@@ -59,6 +58,22 @@ public class Game : MonoBehaviour
     {
         LargeRPC download = new LargeRPC("gameDownload");
         download.ListenForDownload();
+    }
+
+
+
+    public static Sprite LoadSprite(string path)
+    {
+        if (string.IsNullOrEmpty(path)) return null;
+        if (System.IO.File.Exists(path))
+        {
+            byte[] bytes = System.IO.File.ReadAllBytes(path);
+            Texture2D texture = new Texture2D(1, 1);
+            texture.LoadImage(bytes);
+            Sprite sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+            return sprite;
+        }
+        return null;
     }
 
 }
