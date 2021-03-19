@@ -38,7 +38,6 @@ public class GamemodeSelector : MonoBehaviour
             if (gm.Type.ToLower() == "gamemode")
             {
                 TMP_Dropdown.OptionData option = new TMP_Dropdown.OptionData();
-                option.image = gm.Icon;
                 option.text = gm.Name;
                 option.image = gm.Icon;
 
