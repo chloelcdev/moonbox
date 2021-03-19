@@ -685,20 +685,20 @@ public class LargeRPC : IDisposable
         {
             
             int id = reader.ReadInt32();
-            //int dataLen = reader.ReadInt32();
+
             byte[] data = reader.ReadByteArray(null);
             packetEndHit = reader.ReadBit();
 
             float progress = (float)fileBytesReceived / (float)DownloadSize;
 
-            Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
+            //Debug.LogError("file packet received: " + id + " " + data.Length + "    packet finished: " + packetEndHit.ToString());
 
             fileBytesReceived += data.Length;
-            Debug.LogWarning("internal prog: " + progress + "     -     " + fileBytesReceived + "/" + DownloadSize);
+            //Debug.LogWarning("internal prog: " + progress + "     -     " + fileBytesReceived + "/" + DownloadSize);
             if (OnProgressUpdated != null) OnProgressUpdated(progress, "Receiving file: "+ Headers[id].path);
 
             numFilesReceived++;
-            Debug.Log(fileBytesReceived + "   /   " + DownloadSize);
+            //Debug.Log(fileBytesReceived + "   /   " + DownloadSize);
             bool allFilesProcessed = fileBytesReceived >= DownloadSize;
 
             if (id != previousFileID)

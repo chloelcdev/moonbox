@@ -8,6 +8,21 @@ using DG.Tweening;
 public static class MoonboxExtensions
 {
 
+    public static Player GetPlayer(this MLAPI.Connection.NetworkedClient _client)
+    {
+        if (_client.PlayerObject != null)
+        {
+            return _client.PlayerObject.GetComponent<Player>();
+        }
+
+        Debug.LogError("Client doesn't have a PlayerObject! This is not the character, it should exist very early on and should never be destroyed, something is wrong.");
+        return null;
+    }
+
+    /// <summary>
+    /// DEPRECATED - Put a UIScreen component on your screen/popup and use UIScreen.Hide()
+    /// </summary>
+    /// <param name="_t"></param>
     public static void AnimatedUIClose(this Transform _t)
     {
         _t.DOScale(Vector3.zero, 0.4f).onComplete += () =>
@@ -16,6 +31,10 @@ public static class MoonboxExtensions
         };
     }
 
+    /// <summary>
+    /// DEPRECATED - Put a UIScreen component on your screen/popup and use UIScreen.Show()
+    /// </summary>
+    /// <param name="_t"></param>
     public static void AnimatedUIOpen(this Transform _t)
     {
         _t.gameObject.SetActive(true);
