@@ -27,7 +27,7 @@ public class Addon
         {
             foreach (string addonDirectoryPath in Directory.GetDirectories(addonTypeDirectoryPath))
             {
-                string infoFilePath = addonDirectoryPath + "/info.txt";
+                string infoFilePath = addonDirectoryPath + @"\info.txt";
 
                 Addon addon = ParseInfoFile(infoFilePath);
                 if (addon != null) RegisterAddon(addon);
@@ -74,7 +74,8 @@ public class Addon
             }
         }
 
-        string iconPath = newAddon.Path + "/icon.png";
+        string iconPath = newAddon.Path + @"\icon.png";
+        Debug.Log(iconPath);
         if (File.Exists(iconPath))
         {
             newAddon.Icon = MainController.LoadSprite(iconPath);
