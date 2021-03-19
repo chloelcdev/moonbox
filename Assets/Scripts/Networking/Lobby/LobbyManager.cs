@@ -12,13 +12,14 @@ using System;
 using MLAPI.Transports.Tasks;
 using MLAPI.Messaging;
 using System.IO;
+using MLAPI.Connection;
 
 /// <summary>
 /// This should always be sticking around (DontDestroyOnLoad) 
 /// we always need the information the lobby has (the "scoreboard"/user-list can probably just show info from here)
 /// </summary>
 
-public class LobbyManager : MonoBehaviour
+public class LobbyManager
 {
     public static LobbyManager Instance;
     public static UnetTransport Transport;
@@ -30,7 +31,11 @@ public class LobbyManager : MonoBehaviour
     void Start()
     {
         Instance = this;
+
+        NetworkingManager.Singleton.OnClientConnectedCallback += OnClientConnected;
     }
+
+    
 
     Transform GetSpawnPosition()
     {
@@ -238,7 +243,7 @@ public class LobbyManager : MonoBehaviour
 
         // The prefab hash. Use null to use the default player prefab
         // If using this hash, replace "MyPrefabHashGenerator" with the name of a prefab added to the NetworkedPrefabs field of your NetworkingManager object in the scene
-        //ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("Player");
+        //ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("MyPrefabHashGenerator");
 
         Transform spawn = GetSpawnPosition();
 
@@ -247,6 +252,22 @@ public class LobbyManager : MonoBehaviour
         //If approve is true, the connection gets added. If it's false. The client gets disconnected
         callback(createPlayerObject, null, approve, spawn.position, spawn.rotation);
 
+
+
+        //NetworkingManager.Singleton.OnClientConnectedCallback
+
+
+
+        // set a reference to the NetworkedClient on the Player class for later networking
+        
+
         CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", clientId, Stream.Null);
+    }
+
+    private void OnClientConnected(ulong _clientId)
+    {
+        NetworkedClient client = NetworkingManager.Singleton.ConnectedClients[_clientId];
+        Player player = client.GetPlayer();
+        player.SetConnection(client);
     }
 }

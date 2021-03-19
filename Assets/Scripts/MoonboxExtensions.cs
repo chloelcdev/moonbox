@@ -4,11 +4,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
+using MLAPI.Connection;
 
 public static class MoonboxExtensions
 {
 
-    public static Player GetPlayer(this MLAPI.Connection.NetworkedClient _client)
+    public static Player GetPlayer(this NetworkedClient _client)
     {
         if (_client.PlayerObject != null)
         {
