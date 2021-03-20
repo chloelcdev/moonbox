@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.Events;
+using System;
+using System.Text.RegularExpressions;
 
 public class GameConsole : MonoBehaviour
 {
@@ -33,6 +35,7 @@ public class GameConsole : MonoBehaviour
     {
         OnOutput.AddListener(OnConsoleOutput);
     }
+
 
     public void InputToConsole(string _command)
     {

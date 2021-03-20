@@ -17,7 +17,7 @@ public class UIReference
 
 public class UIScreen : MonoBehaviour
 {
-    public const float scaleTime = 0.3f;
+    public const float animationTime = 0.3f;
 
     [SerializeField] bool hideOnStart = false;
     [SerializeField] bool disableOnHide = true;
@@ -30,12 +30,10 @@ public class UIScreen : MonoBehaviour
     public UnityEvent OnHide = new UnityEvent();
     public UnityEvent OnHideFinished = new UnityEvent();
 
-    Vector3 originalScale = Vector3.zero;
-
-    public void Awake()
-    {
-        originalScale = transform.localScale;
-    }
+    /// <summary>
+    /// Whether or not this is in the full shown position
+    /// </summary>
+    public bool isVisible { get; private set; }
 
     public void Start()
     {
@@ -47,10 +45,11 @@ public class UIScreen : MonoBehaviour
         gameObject.SetActive(true);
 
         OnShow.Invoke();
-        originalScale = transform.localScale;
+        transform.DOKill();
+
         if (!_instant)
         {
-            transform.DOScale(Vector3.one, scaleTime).onComplete = ShowFinished;
+            transform.DOScale(Vector3.one, animationTime).onComplete = ShowFinished;
         }
         else
         {
@@ -63,15 +62,20 @@ public class UIScreen : MonoBehaviour
     {
         // set true just in case?
         gameObject.SetActive(true);
+        isVisible = true;
         OnShowFinished.Invoke();
     }
 
     public void Hide(bool _instant = false)
     {
+        isVisible = false;
+
         OnHide.Invoke();
+        transform.DOKill();
+
         if (!_instant)
         {
-            transform.DOScale(Vector3.zero, scaleTime).onComplete = HideFinished;
+            transform.DOScale(Vector3.zero, animationTime).onComplete = HideFinished;
         }
         else
         {
