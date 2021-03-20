@@ -61,6 +61,8 @@ public class UIScreen : MonoBehaviour
 
     void ShowFinished()
     {
+        // set true just in case?
+        gameObject.SetActive(true);
         OnShowFinished.Invoke();
     }
 

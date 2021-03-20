@@ -13,13 +13,16 @@ using MLAPI.Transports.Tasks;
 using MLAPI.Messaging;
 using System.IO;
 using MLAPI.Connection;
+using ProtoBuf;
+using MLAPI.Serialization;
+using BitStream = MLAPI.Serialization.BitStream;
 
 /// <summary>
 /// This should always be sticking around (DontDestroyOnLoad) 
 /// we always need the information the lobby has (the "scoreboard"/user-list can probably just show info from here)
 /// </summary>
 
-public class LobbyManager
+public class LobbyManager : MonoBehaviour
 {
     public static LobbyManager Instance;
     public static UnetTransport Transport;
@@ -33,9 +36,8 @@ public class LobbyManager
         Instance = this;
 
         NetworkingManager.Singleton.OnClientConnectedCallback += OnClientConnected;
+        NetworkingManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
     }
-
-    
 
     Transform GetSpawnPosition()
     {
@@ -239,7 +241,7 @@ public class LobbyManager
         bool approve = true;
         bool createPlayerObject = true;
 
-        print("Client " + clientId + " is being approved.");
+        Debug.Log("Client " + clientId + " is being approved.");
 
         // The prefab hash. Use null to use the default player prefab
         // If using this hash, replace "MyPrefabHashGenerator" with the name of a prefab added to the NetworkedPrefabs field of your NetworkingManager object in the scene
@@ -251,7 +253,7 @@ public class LobbyManager
 
         //If approve is true, the connection gets added. If it's false. The client gets disconnected
         callback(createPlayerObject, null, approve, spawn.position, spawn.rotation);
-
+        Debug.Log("Client " + clientId + " approved.");
 
 
         //NetworkingManager.Singleton.OnClientConnectedCallback
@@ -259,15 +261,81 @@ public class LobbyManager
 
 
         // set a reference to the NetworkedClient on the Player class for later networking
-        
+
 
         CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", clientId, Stream.Null);
     }
 
+    // this happens after approval (96% sure :p)
     private void OnClientConnected(ulong _clientId)
     {
+        Debug.Log("Client " + _clientId + " connected: ");
         NetworkedClient client = NetworkingManager.Singleton.ConnectedClients[_clientId];
         Player player = client.GetPlayer();
-        player.SetConnection(client);
+        player.clientId.Value = (int)_clientId;
+
+
+        PlayerInfo playerInfo = new PlayerInfo();
+        playerInfo.Name = "Set Name in Settings";
+
+        using (BitStream stream = playerInfo.GetSerialized())
+        {
+            CustomMessagingManager.SendNamedMessage("ClientConnected", AllClientIDs(), stream);
+        }
     }
+
+    /// <summary>
+    /// Server only
+    /// </summary>
+    public static List<ulong> AllClientIDs()
+    {
+        List<ulong> clients = new List<ulong>();
+        
+        foreach (var client in NetworkingManager.Singleton.ConnectedClientsList)
+        {
+            clients.Add(client.ClientId);
+        }
+
+        return clients;
+    }
+
+    private void OnClientDisconnect(ulong _clientId)
+    {
+        Debug.Log("Client " + _clientId + " connected: ");
+        NetworkedClient client = NetworkingManager.Singleton.ConnectedClients[_clientId];
+
+        PlayerInfo playerInfo = new PlayerInfo();
+        playerInfo.Name = "Set Name in Settings";
+
+        using (BitStream stream = playerInfo.GetSerialized())
+        {
+            CustomMessagingManager.SendNamedMessage("ClientConnected", AllClientIDs(), stream);
+        }
+    }
+}
+
+[ProtoContract]
+public class PlayerInfo
+{
+    [ProtoMember(1)]
+    public string Name { get; set; }
+
+    /// <summary>
+    /// Make sure to run Dispose() or use using(){}
+    /// </summary>
+    /// <param name="_playerInfo"></param>
+    /// <returns></returns>
+    public BitStream GetSerialized()
+    {
+        BitStream stream = new BitStream();
+        Serializer.Serialize<PlayerInfo>(stream, this);
+
+        return stream;
+    }
+
+    public static PlayerInfo GetDeserialized(Stream _protobufStream)
+    {
+       return Serializer.Deserialize<PlayerInfo>(_protobufStream);
+    }
+    // we can add more here later
 }

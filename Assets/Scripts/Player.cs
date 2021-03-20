@@ -7,12 +7,7 @@ using MLAPI.NetworkedVar;
 
 public class Player : NetworkedBehaviour
 {
-    [SyncedVar] public NetworkedClient client;
-    
-    public void SetConnection(NetworkedClient _client)
-    {
-        client = _client;
-    }
+    public NetworkedVar<int> clientId = new NetworkedVar<int>( new NetworkedVarSettings { WritePermission = NetworkedVarPermission.ServerOnly, SendTickrate = -1}, -1);
 
-
+    public PlayerInfo info;
 }
