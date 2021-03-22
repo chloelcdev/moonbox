@@ -7,12 +7,16 @@ using UnityEngine.InputSystem;
 
 public class MainController : MonoBehaviour
 {
+    public const string FileTypeWhitelist = "*.fbx|*.png|*.bmp|*.txt|*.lua|*.mp4";
+
     public static MainController Instance;
 
     void Awake()
     {
         Instance = this;
     }
+
+    
 
     // Start is called before the first frame update
     void Start()

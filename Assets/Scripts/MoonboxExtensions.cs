@@ -218,6 +218,17 @@ public static class MoonboxExtensions
     }
 
     #endregion
+
+    // https://social.msdn.microsoft.com/Forums/vstudio/en-US/b0c31115-f6f0-4de5-a62d-d766a855d4d1/directorygetfiles-with-searchpattern-to-get-all-dll-and-exe-files-in-one-call?forum=netfxbcl
+    public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
+    {
+        string[] searchPatterns = searchPattern.Split('|');
+        List<string> files = new List<string>();
+        foreach (string sp in searchPatterns)
+            files.AddRange(System.IO.Directory.GetFiles(path, sp, searchOption));
+        files.Sort();
+        return files.ToArray();
+    }
 }
 
 

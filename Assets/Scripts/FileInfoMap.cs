@@ -1,10 +1,8 @@
-using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
 using ProtoBuf;
-using System.IO;
-using Unity.IO.LowLevel.Unsafe;
 using System;
+using System.Collections.Generic;
+using System.IO;
+using UnityEngine;
 
 [ProtoContract]
 public class FileInfo
@@ -27,10 +25,7 @@ public class FileInfoMap
 {
     [ProtoMember(1)]
     public Dictionary<string, FileInfo> Files { get; set; }
-
-    public static FileInfoMap Main { get; private set; }
-
-    public const string FileTypeWhitelist = "*.fbx|*.png|*.bmp|*.txt|*.lua|*.mp4";
+    public static FileInfoMap Map { get; private set; }
 
     public static void ReadOrCreateEmptyMap()
     {
@@ -39,52 +34,44 @@ public class FileInfoMap
         {
             using (var file = File.Open("filemap.bin", FileMode.Open))
             {
-                Main = Serializer.Deserialize<FileInfoMap>(file);
+                Map = Serializer.Deserialize<FileInfoMap>(file);
             }
         }
         else
         {
             File.Create("filemap.bin");
-            Main = new FileInfoMap();
+            Map = new FileInfoMap();
         }
     }
 
-    // https://social.msdn.microsoft.com/Forums/vstudio/en-US/b0c31115-f6f0-4de5-a62d-d766a855d4d1/directorygetfiles-with-searchpattern-to-get-all-dll-and-exe-files-in-one-call?forum=netfxbcl
-    public static string[] GetFiles(string path, string searchPattern, SearchOption searchOption)
-    {
-        string[] searchPatterns = searchPattern.Split('|');
-        List<string> files = new List<string>();
-        foreach (string sp in searchPatterns)
-            files.AddRange(System.IO.Directory.GetFiles(path, sp, searchOption));
-        files.Sort();
-        return files.ToArray();
-    }
 
     public static void UpdateFileMap()
     {
-        
-        foreach(var filePath in GetFiles(Application.dataPath + "/game", FileTypeWhitelist, SearchOption.AllDirectories))
+        foreach (var dirPath in new List<string>() { "/game", "/downloadCache" })
         {
-            using (FileStream fs = new FileStream(filePath, FileMode.Open))
+            foreach (var filePath in MoonboxExtensions.GetFiles(Application.dataPath + dirPath, MainController.FileTypeWhitelist, SearchOption.AllDirectories))
             {
-                DateTime lastMod = File.GetLastWriteTime(filePath);
-
-                if (!Main.Files.ContainsKey(filePath) || Main.Files[filePath].lastModified != lastMod)
+                using (FileStream fs = new FileStream(filePath, FileMode.Open))
                 {
-                    FileInfo info = new FileInfo();
-                    info.lastModified = File.GetLastWriteTime(filePath);
-                    info.hash = fs.sha256();
-                    info.fileName = Path.GetFileName(filePath);
-                    info.fileSize = fs.Length;
+                    DateTime lastMod = File.GetLastWriteTime(filePath);
 
-                    Main.Files.Add(filePath, info);
+                    if (!Map.Files.ContainsKey(filePath) || Map.Files[filePath].lastModified != lastMod)
+                    {
+                        FileInfo info = new FileInfo();
+                        info.lastModified = File.GetLastWriteTime(filePath);
+                        info.hash = fs.sha256();
+                        info.fileName = Path.GetFileName(filePath);
+                        info.fileSize = fs.Length;
+
+                        Map.Files.Add(filePath, info);
+                    }
                 }
             }
         }
 
         using (var file = File.OpenWrite("filemap.bin"))
         {
-            Serializer.Serialize(file, Main);
+            Serializer.Serialize(file, Map);
         }
     }
 }
@@ -97,11 +84,66 @@ public class DownloadCacheFileInfo
     public byte[] hash { get; set; }
 
     [ProtoMember(2)]
-    public string filePath { get; set; }
+    public string virtualPath { get; set; }
 
     [ProtoMember(3)]
     public long fileSize { get; set; }
 
     [ProtoMember(4)]
     public DateTime lastModified { get; set; }
+}
+
+
+[ProtoContract]
+public class DownloadCacheFileInfoMap
+{
+    [ProtoMember(1)]
+    public Dictionary<byte[], DownloadCacheFileInfo> Files { get; set; }
+
+    public static DownloadCacheFileInfoMap Map { get; private set; }
+
+    public static void ReadOrCreateEmptyMap()
+    {
+
+        if (File.Exists("downloadmap.bin"))
+        {
+            using (var file = File.Open("downloadmap.bin", FileMode.Open))
+            {
+                Map = Serializer.Deserialize<DownloadCacheFileInfoMap>(file);
+            }
+        }
+        else
+        {
+            File.Create("downloadmap.bin");
+            Map = new DownloadCacheFileInfoMap();
+        }
+    }
+
+    public static void AddMapping(string realPath, string virtualPath)
+    {
+        if (File.Exists(realPath))
+        {
+            using (var file = File.Open(realPath, FileMode.Open))
+            {
+                FileInfo fileInfo = FileInfoMap.Map.Files[realPath];
+
+                DownloadCacheFileInfo dlInfo = new DownloadCacheFileInfo();
+                dlInfo.virtualPath = virtualPath;
+                dlInfo.lastModified = fileInfo.lastModified;
+                dlInfo.hash = fileInfo.hash;
+                dlInfo.fileSize = fileInfo.fileSize;
+
+                Map.Files.Add(fileInfo.hash, dlInfo);
+
+            }
+        }
+    }
+
+    public static void SaveMap()
+    {
+        using (var file = File.OpenWrite("downloadmap.bin"))
+        {
+            Serializer.Serialize(file, Map);
+        }
+    }
 }
