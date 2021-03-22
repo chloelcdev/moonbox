@@ -746,7 +746,7 @@ public class LargeRPC : IDisposable
             // TODO: use header.hash to figure out if we need each file. This allows us to dump a ton of downloaded files together (maybe separating by lua, model, material, for convenience) and get them no matter
 
             // we're just adding all of them without question for now (except test files)
-            if (!header.path.Contains("_test"))
+            if (!Path.GetFileName(header.path).Contains("_test"))
             {
                 fileIDs.Add(header.id);
             }

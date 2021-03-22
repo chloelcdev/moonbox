@@ -30,8 +30,6 @@ public class GlobalConsoleController : MonoBehaviour
         if (Keyboard.current.backquoteKey.wasPressedThisFrame)
         {
             Instance.Mainconsole.inputField.onValueChanged.AddListener(RemoveBackQuotes);
-                
-
             if (isVisible)
             {
                 Hide();
@@ -40,6 +38,11 @@ public class GlobalConsoleController : MonoBehaviour
             {
                 Show();
             }
+        }
+
+        if (Keyboard.current.enterKey.wasPressedThisFrame)
+        {
+
         }
     }
 

@@ -5,6 +5,11 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 using MLAPI.Connection;
+using MLAPI.Serialization.Pooled;
+using System.Text;
+using System.IO.Compression;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
+//using SevenZip;
 
 public static class MoonboxExtensions
 {
@@ -41,6 +46,101 @@ public static class MoonboxExtensions
         _t.gameObject.SetActive(true);
         _t.DOScale(Vector3.one, 0.4f);
     }
+
+
+    #region string to bytes
+    //https://www.codeproject.com/Questions/211192/How-to-convert-string-to-byte-array-and-vice-versa
+
+    public static string GetAsString(this byte[] _bytes, Encoding _encoding = null)
+    {
+        if (_encoding == null) _encoding = Encoding.Unicode;
+
+        return new string(_encoding.GetChars(_bytes));
+    }
+
+    public static byte[] GetAsBytes(this string _string, Encoding _encoding = null)
+    {
+        if (_encoding == null) _encoding = Encoding.Unicode;
+
+        return _encoding.GetBytes(_string);
+    }
+
+    #endregion
+
+
+    #region byte[] compression
+    //https://stackoverflow.com/questions/39191950/how-to-compress-a-byte-array-without-stream-or-system-io
+
+    public static byte[] GetCompressed(this byte[] data, CompressionLevel _compressionLevel = CompressionLevel.Fastest)
+    {
+        MemoryStream output = new MemoryStream();
+        using (DeflateStream dstream = new DeflateStream(output, _compressionLevel))
+        {
+            dstream.Write(data, 0, data.Length);
+        }
+        return output.ToArray();
+    }
+
+    public static byte[] GetDecompressed(this byte[] data)
+    {
+        MemoryStream input = new MemoryStream(data);
+        MemoryStream output = new MemoryStream();
+        using (DeflateStream dstream = new DeflateStream(input, CompressionMode.Decompress))
+        {
+            dstream.CopyTo(output);
+        }
+        return output.ToArray();
+    }
+
+    #endregion
+
+
+    #region serialize-the-crap-out-of-it
+
+    public static byte[] GetSerializedAndCompressed(this object _obj)
+    {
+        return JsonUtility.ToJson(_obj).GetAsBytes().GetCompressed();
+    }
+
+    public static T GetDecompressedAndDeserialized<T>(this byte[] _compressedSerializedData)
+    {
+        return JsonUtility.FromJson<T>(_compressedSerializedData.GetDecompressed().GetAsString());
+    }
+
+    /// <summary>
+    /// Takes an object, serializes it to json, converts that to a byte array, compresses that byte array, and puts that in a stream\
+    /// 
+    /// Be sure to dispose of the stream
+    /// </summary>
+    /// <param name="_obj"></param>
+    /// <returns></returns>
+    public static PooledBitStream GetNetworkCompressedStream(this object _obj)
+    {
+        PooledBitStream stream = PooledBitStream.Get();
+
+        using (PooledBitWriter writer = PooledBitWriter.Get(stream))
+        {
+            writer.WriteByteArray(_obj.GetSerializedAndCompressed());
+        }
+
+        return stream;
+    }
+
+    /// <summary>
+    /// Returns the original object from an object.GetNetworkCompressed()
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
+    /// <param name="_compressedSerializedDataStream"></param>
+    /// <returns></returns>
+    public static T DeserializeNetworkCompressedStream<T>(this Stream _compressedSerializedDataStream)
+    {
+        using (PooledBitReader reader = PooledBitReader.Get(_compressedSerializedDataStream))
+        {
+            return reader.ReadByteArray().GetDecompressedAndDeserialized<T>();
+        }
+    }
+
+    #endregion
 
 
     #region Byte array to hex

@@ -16,6 +16,9 @@ using MLAPI.Connection;
 using ProtoBuf;
 using MLAPI.Serialization;
 using BitStream = MLAPI.Serialization.BitStream;
+using MLAPI.Serialization.Pooled;
+using System.Text;
+using TMPro;
 
 /// <summary>
 /// This should always be sticking around (DontDestroyOnLoad) 
@@ -31,12 +34,17 @@ public class LobbyManager : MonoBehaviour
     public InputField createServerName;
     public InputField joinAddress;
 
+    public TMP_InputField playerNameField;
+
     void Start()
     {
         Instance = this;
 
-        NetworkingManager.Singleton.OnClientConnectedCallback += OnClientConnected;
-        NetworkingManager.Singleton.OnClientDisconnectCallback += OnClientDisconnect;
+        NetworkingManager.Singleton.OnClientConnectedCallback += ML_OnClientConnected;
+        NetworkingManager.Singleton.OnClientDisconnectCallback += ML_OnClientDisconnect;
+
+        CustomMessagingManager.RegisterNamedMessageHandler("ClientConnected", ClientConnected);
+        CustomMessagingManager.RegisterNamedMessageHandler("ClientDisconnected", ClientDisconnected);
     }
 
     Transform GetSpawnPosition()
@@ -105,12 +113,41 @@ public class LobbyManager : MonoBehaviour
         Transport.ConnectAddress = _ip; //takes string
         Transport.ConnectPort = _port;
 
-        NetworkingManager.Singleton.NetworkConfig.ConnectionData = System.Text.Encoding.ASCII.GetBytes(_password);
+        Debug.Log("Connecting to " + _ip + ":" + _port);
+
+        ulong? hsh = SpawnManager.GetPrefabHashFromGenerator("Player");
+        Debug.Log(hsh);
+        ConnectionApprovalData connectionData = new ConnectionApprovalData((ulong)hsh, playerNameField.text, _password);
+
+        NetworkingManager.Singleton.NetworkConfig.ConnectionData = connectionData.GetSerializedAndCompressed();
+
         NetworkingManager.Singleton.StartClient();
 
         Debug.Log("registered JoinConnectionAccepted");
         CustomMessagingManager.RegisterNamedMessageHandler("JoinConnectionAccepted", OnJoinConnectionAccepted);
 
+    }
+
+    [System.Serializable]
+    public class ConnectionApprovalData
+    {
+        public ConnectionApprovalData(ulong _hash, string _playerName = "Unnamed Player", string _password = "")
+        {
+            playerPrefabHash = _hash;
+
+            playerName = _playerName;
+            roomPassword = _password;
+        }
+
+        [SerializeField]
+        public ulong playerPrefabHash { get; set; }
+
+        [SerializeField]
+        public string playerName { get; set; }
+        [SerializeField]
+        public string roomPassword { get; set; }
+        
+        
     }
 
 
@@ -174,6 +211,8 @@ public class LobbyManager : MonoBehaviour
     }
 
     Dictionary<ulong, LargeRPC> inProgressDownloads = new Dictionary<ulong, LargeRPC>();
+    
+
     void DownloadRequestReceived(ulong _requesterClientID, Stream _data)
     {
         Debug.Log("Received download request from sender " + _requesterClientID);
@@ -235,107 +274,146 @@ public class LobbyManager : MonoBehaviour
         UnityEngine.SceneManagement.SceneManager.LoadScene("MainMenu");
     }
 
-    void ApprovalCheck(byte[] connectionData, ulong clientId, NetworkingManager.ConnectionApprovedDelegate callback)
+    Dictionary<ulong, ConnectionApprovalData> connectionDataCache = new Dictionary<ulong, ConnectionApprovalData>();
+
+    void ApprovalCheck(byte[] _compressedSerializedData, ulong _clientId, NetworkingManager.ConnectionApprovedDelegate _callback)
     {
-        //Your logic here
+        Debug.Log("Client " + _clientId + " is being approved.");
+
         bool approve = true;
         bool createPlayerObject = true;
 
-        Debug.Log("Client " + clientId + " is being approved.");
+        
 
-        // The prefab hash. Use null to use the default player prefab
-        // If using this hash, replace "MyPrefabHashGenerator" with the name of a prefab added to the NetworkedPrefabs field of your NetworkingManager object in the scene
-        //ulong? prefabHash = SpawnManager.GetPrefabHashFromGenerator("MyPrefabHashGenerator");
 
-        Transform spawn = GetSpawnPosition();
+        ConnectionApprovalData connectionData = _compressedSerializedData.GetDecompressedAndDeserialized<ConnectionApprovalData>();
 
-        // probably send lua here
+        // I don't actually know that this is going to do us much good, but it seems like if they hack their game this might catch it and I already coded it :p
+        approve = true || (connectionData.playerPrefabHash == SpawnManager.GetPrefabHashFromGenerator("Player"));
+
+
+        if (!connectionDataCache.ContainsKey(_clientId)) {
+            connectionDataCache.Add(_clientId, connectionData);
+        }
 
         //If approve is true, the connection gets added. If it's false. The client gets disconnected
-        callback(createPlayerObject, null, approve, spawn.position, spawn.rotation);
-        Debug.Log("Client " + clientId + " approved.");
-
-
-        //NetworkingManager.Singleton.OnClientConnectedCallback
-
-
+        _callback(createPlayerObject, null, approve, null, null);
+        Debug.Log("Client " + _clientId + " approved, spawning player object");
 
         // set a reference to the NetworkedClient on the Player class for later networking
 
+        
+        CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", _clientId, Stream.Null);
 
-        CustomMessagingManager.SendNamedMessage("JoinConnectionAccepted", clientId, Stream.Null);
+
     }
 
     // this happens after approval (96% sure :p)
-    private void OnClientConnected(ulong _clientId)
+    private void ML_OnClientConnected(ulong _clientId)
     {
-        Debug.Log("Client " + _clientId + " connected: ");
+        if (!NetworkingManager.Singleton.IsHost && !NetworkingManager.Singleton.IsServer) return;
+
+        Debug.Log("Client " + _clientId + " connected");
+
         NetworkedClient client = NetworkingManager.Singleton.ConnectedClients[_clientId];
         Player player = client.GetPlayer();
-        player.clientId.Value = (int)_clientId;
 
+        
 
-        PlayerInfo playerInfo = new PlayerInfo();
-        playerInfo.Name = "Set Name in Settings";
+        player.ClientId.Value = _clientId;
 
-        using (BitStream stream = playerInfo.GetSerialized())
+        player.Name.Value = connectionDataCache[_clientId].playerName;
+
+        connectionDataCache.Remove(_clientId);
+
+        using (PooledBitStream stream = PooledBitStream.Get())
         {
-            CustomMessagingManager.SendNamedMessage("ClientConnected", AllClientIDs(), stream);
+            using (PooledBitWriter w = PooledBitWriter.Get(stream))
+            {
+                w.WriteUInt64(player.NetworkedObject.NetworkId);
+                CustomMessagingManager.SendNamedMessage("ClientConnected", AllClientIDs(), stream);
+            }
         }
+
     }
 
     /// <summary>
     /// Server only
     /// </summary>
-    public static List<ulong> AllClientIDs()
+    public static List<ulong> AllClientIDs(bool _excludeLocal = false)
     {
         List<ulong> clients = new List<ulong>();
         
         foreach (var client in NetworkingManager.Singleton.ConnectedClientsList)
         {
+            if (_excludeLocal && client.ClientId == NetworkingManager.Singleton.LocalClientId) continue;
+
             clients.Add(client.ClientId);
         }
 
         return clients;
     }
 
-    private void OnClientDisconnect(ulong _clientId)
+    private void ML_OnClientDisconnect(ulong _clientId)
     {
+        if (!NetworkingManager.Singleton.IsHost && !NetworkingManager.Singleton.IsServer) return;
+
         Debug.Log("Client " + _clientId + " connected: ");
-        NetworkedClient client = NetworkingManager.Singleton.ConnectedClients[_clientId];
 
-        PlayerInfo playerInfo = new PlayerInfo();
-        playerInfo.Name = "Set Name in Settings";
-
-        using (BitStream stream = playerInfo.GetSerialized())
+        using (PooledBitStream stream = PooledBitStream.Get())
         {
-            CustomMessagingManager.SendNamedMessage("ClientConnected", AllClientIDs(), stream);
+            using (PooledBitWriter writer = PooledBitWriter.Get(stream))
+            {
+                CustomMessagingManager.SendNamedMessage("ClientDisconnected", AllClientIDs(), stream);
+            }
         }
     }
+
+    private void ClientConnected(ulong _sender, Stream _stream)
+    {
+        ulong objectID;
+        using (_stream)
+        {
+            using (PooledBitReader reader = PooledBitReader.Get(_stream))
+            {
+                objectID = reader.ReadUInt64();
+            }
+        }
+
+        Player player = null;
+
+        if (objectID != 0 && SpawnManager.SpawnedObjects.ContainsKey(objectID))
+        {
+            player = SpawnManager.SpawnedObjects[objectID].GetComponent<Player>();
+        }
+
+        if (player != null)
+        {
+            Debug.Log("Server says client " + player.Name.Value + " - " + player.ClientId.Value + " connected: ");
+        }
+    }
+
+
+    private void ClientDisconnected(ulong _sender, Stream _stream)
+    {
+        PlayerInfo info;
+        using (_stream)
+        {
+            info = _stream.DeserializeNetworkCompressedStream<PlayerInfo>();
+        }
+
+        Debug.Log("Server says client " + info.Name + " - " + info.ClientId + " disconnected: ");
+
+    }
+
 }
 
-[ProtoContract]
+[Serializable]
 public class PlayerInfo
 {
-    [ProtoMember(1)]
-    public string Name { get; set; }
+    [SerializeField]
+    public ulong ClientId { get; set; }
 
-    /// <summary>
-    /// Make sure to run Dispose() or use using(){}
-    /// </summary>
-    /// <param name="_playerInfo"></param>
-    /// <returns></returns>
-    public BitStream GetSerialized()
-    {
-        BitStream stream = new BitStream();
-        Serializer.Serialize<PlayerInfo>(stream, this);
-
-        return stream;
-    }
-
-    public static PlayerInfo GetDeserialized(Stream _protobufStream)
-    {
-       return Serializer.Deserialize<PlayerInfo>(_protobufStream);
-    }
-    // we can add more here later
+    [SerializeField]
+    public string Name { get; set; } = "Unnamed Player";
 }
