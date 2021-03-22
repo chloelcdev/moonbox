@@ -18,7 +18,7 @@ public class MainController : MonoBehaviour
     void Start()
     {
         DontDestroyOnLoad(gameObject);
-        ProtoFileMap.MakeNewFileMap();
+        FileInfoMap.ReadOrCreateEmptyMap();
     }
 
     // Update is called once per frame

@@ -45,6 +45,8 @@ public class LobbyManager : MonoBehaviour
 
         CustomMessagingManager.RegisterNamedMessageHandler("ClientConnected", ClientConnected);
         CustomMessagingManager.RegisterNamedMessageHandler("ClientDisconnected", ClientDisconnected);
+
+
     }
 
     Transform GetSpawnPosition()
