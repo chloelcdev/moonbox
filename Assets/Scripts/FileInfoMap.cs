@@ -32,9 +32,9 @@ public class FileInfoMap
 
         if (File.Exists("filemap.bin"))
         {
-            using (var file = File.Open("filemap.bin", FileMode.Open))
+            using (var fs = File.Open("filemap.bin", FileMode.Open))
             {
-                Map = Serializer.Deserialize<FileInfoMap>(file);
+                Map = Serializer.Deserialize<FileInfoMap>(fs);
             }
         }
         else
@@ -47,31 +47,30 @@ public class FileInfoMap
 
     public static void UpdateFileMap()
     {
-        foreach (var dirPath in new List<string>() { "/game", "/downloadCache" })
+        //foreach (var dirPath in new List<string>() { "/game", "/downloadCache" })
+       
+        foreach (var filePath in MoonboxExtensions.GetFiles(Application.dataPath + "/game", MainController.FileTypeWhitelist, SearchOption.AllDirectories))
         {
-            foreach (var filePath in MoonboxExtensions.GetFiles(Application.dataPath + dirPath, MainController.FileTypeWhitelist, SearchOption.AllDirectories))
+            using (FileStream fs = new FileStream(filePath, FileMode.Open))
             {
-                using (FileStream fs = new FileStream(filePath, FileMode.Open))
+                DateTime lastMod = File.GetLastWriteTime(filePath);
+
+                if (!Map.Files.ContainsKey(filePath) || Map.Files[filePath].lastModified != lastMod)
                 {
-                    DateTime lastMod = File.GetLastWriteTime(filePath);
+                    FileInfo info = new FileInfo();
+                    info.lastModified = File.GetLastWriteTime(filePath);
+                    info.hash = fs.sha256();
+                    info.fileName = Path.GetFileName(filePath);
+                    info.fileSize = fs.Length;
 
-                    if (!Map.Files.ContainsKey(filePath) || Map.Files[filePath].lastModified != lastMod)
-                    {
-                        FileInfo info = new FileInfo();
-                        info.lastModified = File.GetLastWriteTime(filePath);
-                        info.hash = fs.sha256();
-                        info.fileName = Path.GetFileName(filePath);
-                        info.fileSize = fs.Length;
-
-                        Map.Files.Add(filePath, info);
-                    }
+                    Map.Files.Add(filePath, info);
                 }
             }
         }
 
-        using (var file = File.OpenWrite("filemap.bin"))
+        using (var fs = File.OpenWrite("filemap.bin"))
         {
-            Serializer.Serialize(file, Map);
+            Serializer.Serialize(fs, Map);
         }
     }
 }
@@ -107,9 +106,9 @@ public class DownloadCacheFileInfoMap
 
         if (File.Exists("downloadmap.bin"))
         {
-            using (var file = File.Open("downloadmap.bin", FileMode.Open))
+            using (var fs = File.Open("downloadmap.bin", FileMode.Open))
             {
-                Map = Serializer.Deserialize<DownloadCacheFileInfoMap>(file);
+                Map = Serializer.Deserialize<DownloadCacheFileInfoMap>(fs);
             }
         }
         else
@@ -121,17 +120,20 @@ public class DownloadCacheFileInfoMap
 
     public static void AddMapping(string realPath, string virtualPath)
     {
+        // generate unique name 
+
         if (File.Exists(realPath))
         {
-            using (var file = File.Open(realPath, FileMode.Open))
+           
+            using (var fs = File.Open(realPath, FileMode.Open))
             {
                 FileInfo fileInfo = FileInfoMap.Map.Files[realPath];
 
                 DownloadCacheFileInfo dlInfo = new DownloadCacheFileInfo();
                 dlInfo.virtualPath = virtualPath;
-                dlInfo.lastModified = fileInfo.lastModified;
-                dlInfo.hash = fileInfo.hash;
-                dlInfo.fileSize = fileInfo.fileSize;
+                dlInfo.lastModified = File.GetLastWriteTime(realPath);
+                dlInfo.hash = fs.sha256();
+                dlInfo.fileSize = fs.Length;
 
                 Map.Files.Add(fileInfo.hash, dlInfo);
 
@@ -141,9 +143,9 @@ public class DownloadCacheFileInfoMap
 
     public static void SaveMap()
     {
-        using (var file = File.OpenWrite("downloadmap.bin"))
+        using (var fs = File.OpenWrite("downloadmap.bin"))
         {
-            Serializer.Serialize(file, Map);
+            Serializer.Serialize(fs, Map);
         }
     }
 }
