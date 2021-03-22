@@ -24,7 +24,8 @@ public class FileInfo
 public class FileInfoMap
 {
     [ProtoMember(1)]
-    public Dictionary<string, FileInfo> Files { get; set; }
+    public Dictionary<string, FileInfo> Files { get; set; } = new Dictionary<string, FileInfo>();
+    public Dictionary<byte[], FileInfo> FilesByHash { get; set; } = new Dictionary<byte[], FileInfo>();
     public static FileInfoMap Map { get; private set; }
 
     public static void ReadOrCreateEmptyMap()
@@ -64,6 +65,7 @@ public class FileInfoMap
                     info.fileSize = fs.Length;
 
                     Map.Files.Add(filePath, info);
+                    Map.FilesByHash.Add(info.hash, info);
                 }
             }
         }
@@ -97,7 +99,7 @@ public class DownloadCacheFileInfo
 public class DownloadCacheFileInfoMap
 {
     [ProtoMember(1)]
-    public Dictionary<byte[], DownloadCacheFileInfo> Files { get; set; }
+    public Dictionary<byte[], DownloadCacheFileInfo> Files { get; set; } = new Dictionary<byte[], DownloadCacheFileInfo>();
 
     public static DownloadCacheFileInfoMap Map { get; private set; }
 
