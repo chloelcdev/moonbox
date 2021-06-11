@@ -7506,17 +7506,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   screens:
-    list:
-    - Key: Title
-      Value: {fileID: 414185928}
-    - Key: Options
-      Value: {fileID: 219078160}
-    - Key: JoinGame
-      Value: {fileID: 1355441232}
-    - Key: CreateGame
-      Value: {fileID: 1363119532}
-    - Key: ManageMaster
-      Value: {fileID: 1716279441}
+  - Name: Title
+    Screen: {fileID: 414185928}
+  - Name: Options
+    Screen: {fileID: 219078160}
+  - Name: JoinGame
+    Screen: {fileID: 1355441232}
+  - Name: CreateGame
+    Screen: {fileID: 1363119532}
+  - Name: ManageMaster
+    Screen: {fileID: 1716279441}
 --- !u!4 &1028583111
 Transform:
   m_ObjectHideFlags: 0
