@@ -3,21 +3,46 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+[System.Serializable]
+class ScreenRef
+{
+    public string Name = "";
+    public UIScreen Screen = null;
+
+    public ScreenRef(string _name, UIScreen _screen)
+    {
+        Name = _name;
+        Screen = _screen;
+    }
+}
 
 public class ScreenSwapper : MonoBehaviour
 {
-    [SerializeField] SerializableDictionary<string, UIScreen> screens;
+    [SerializeField] List<ScreenRef> screens;
+    Dictionary<string, UIScreen> screensDictionary = new Dictionary<string, UIScreen>();
 
     UIScreen currentScreen = null;
 
+    public void Awake()
+    {
+        BuildScreenDictionary();
+    }
+
+    void BuildScreenDictionary()
+    {
+        foreach (var screenRef in screens)
+        {
+            screensDictionary.Add(screenRef.Name, screenRef.Screen);
+        }
+    }
 
     public void SwitchScreen(string _name, bool _instant = false)
     {
-        if (screens.Keys.Contains(_name))
+        if (screensDictionary.ContainsKey(_name))
         {
             if (currentScreen != null) currentScreen.Hide(_instant);
-            screens[_name].Show(_instant);
-            currentScreen = screens[_name];
+            screensDictionary[_name].Show(_instant);
+            currentScreen = screensDictionary[_name];
             return;
         }
 
