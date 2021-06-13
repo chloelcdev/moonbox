@@ -33,7 +33,7 @@ public class ProgressUI : MonoBehaviour
 
     public static void SetProgess(float _progress)
     {
-        Debug.Log("Progress set : " + _progress);
+        //Debug.Log("Progress set : " + _progress);
         Instance.progressBar.value = _progress;
     }
 

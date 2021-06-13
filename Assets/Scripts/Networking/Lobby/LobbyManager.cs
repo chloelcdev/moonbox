@@ -51,7 +51,7 @@ public class LobbyManager : MonoBehaviour
 
     Transform GetSpawnPosition()
     {
-        Debug.LogError("Not implemented");
+        Debug.LogWarning("Not implemented");
         return transform;
     }
 
@@ -205,7 +205,7 @@ public class LobbyManager : MonoBehaviour
         Debug.Log("Listening for download requests");
         if (!NetworkingManager.Singleton.IsServer)
         {
-            Debug.LogError("Only run ListenForDownloadRequests() on the server");
+            Debug.LogWarning("Only run ListenForDownloadRequests() on the server");
             return;
         }
 
@@ -230,7 +230,7 @@ public class LobbyManager : MonoBehaviour
         }
         else
         {
-            Debug.LogError("User " + _requesterClientID + " is already downloading, ignoring request");
+            Debug.LogWarning("User " + _requesterClientID + " is already downloading, ignoring request");
         }
     }
 

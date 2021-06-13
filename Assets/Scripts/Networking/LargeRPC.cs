@@ -83,7 +83,7 @@ public class LargeRPC : IDisposable
     public void StopListening()
     {
         CustomMessagingManager.UnregisterNamedMessageHandler(MessageName);
-        Debug.LogError("Stopped Listening");
+        Debug.Log("Stopped Listening");
     }
 
     public void ChangeState(LargeRPCState _state)
@@ -166,7 +166,7 @@ public class LargeRPC : IDisposable
         }
         else
         {
-            Debug.LogError("Folder not found");
+            Debug.LogWarning("Folder not found");
         }
     }
 
@@ -226,7 +226,7 @@ public class LargeRPC : IDisposable
             }
             else
             {
-                Debug.LogError("File not found, skipping: " + path);
+                Debug.LogWarning("File not found, skipping: " + path);
             }
         }
         
@@ -469,7 +469,7 @@ public class LargeRPC : IDisposable
     public void ListenForFilesNeededListOrCompletion()
     {
         CustomMessagingManager.RegisterNamedMessageHandler(MessageName, ReceiveFilesNeededListFromReceiver);
-        Debug.LogError("Started Listening");
+        Debug.Log("Started Listening");
     }
 
     // this will pass nothing when they're done
@@ -529,12 +529,11 @@ public class LargeRPC : IDisposable
     {
         ChangeState(LargeRPCState.Receive_AwaitingFirstPacket);
         CustomMessagingManager.RegisterNamedMessageHandler(MessageName, ReceiveFilesDownloadPieceFromSender);
-        Debug.LogError("Started Listening");
+        Debug.Log("Started Listening");
     }
 
     public void ReceiveFilesDownloadPieceFromSender(ulong _senderClientID, Stream _stream)
     {
-        Debug.LogError("packet");
         switch (State)
         {
             case LargeRPCState.Receive_AwaitingFirstPacket:
@@ -615,7 +614,7 @@ public class LargeRPC : IDisposable
                             }
                             else
                             {
-                                Debug.LogError("File not found, you messed up, holmes.");
+                                Debug.LogWarning("File not found, you messed up, holmes.");
                             }
                         }
 
@@ -645,7 +644,7 @@ public class LargeRPC : IDisposable
             bool isLastInPacket = reader.ReadBool();
 
             FileHeader header = new FileHeader(id, filename, hash, fileLength);
-            Debug.LogError("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
+            Debug.Log("header received: " + id + " " + filename + "    hash: " + hash.ToString() + "  " + fileLength.ToString());
             
             if (OnProgressUpdated!=null) OnProgressUpdated((float)id / (float)numFilesNeeded, "Receiving headers " + id);
             Headers.Add(header);
