@@ -11,6 +11,10 @@ public static class Paths
     public static string AddonPathRelative => "addons";
     public static string AddonPath => Path.Combine(MainGamePath, AddonPathRelative);
 
+    public static string DownloadCachePathRelative => "downloadCache";
+    public static string DownloadCachePath => Path.Combine(MainGamePath, DownloadCachePathRelative);
+
+
     public static string GetInfoFilePath(string _directoryPath)
     {
         return Path.Combine(_directoryPath, "info.txt");
@@ -24,6 +28,11 @@ public static class Paths
     public static string GetCurrentGamemodeFilesPath()
     {
         return Path.Combine(AddonPath, LobbyManager.Instance.SelectedGamemode.RelativePath);
+    }
+
+    public static string GetDownloadPath(FileHeader _header)
+    {
+        return Path.Combine(Paths.DownloadCachePath, _header.hash.toHex());
     }
 
 }

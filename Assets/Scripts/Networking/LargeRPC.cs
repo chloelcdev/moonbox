@@ -595,7 +595,7 @@ public class LargeRPC : IDisposable
 
                         foreach (var header in Headers)
                         {
-                            string filePath = testPath(header.path);
+                            string filePath = Paths.GetDownloadPath(header);
 
                             if (File.Exists(filePath))
                             {
@@ -666,17 +666,6 @@ public class LargeRPC : IDisposable
         return false;
     }
 
-    public string testPath(string _path)
-    {
-        string directory = Path.GetDirectoryName(_path) + @"\";
-        string filename = Path.GetFileNameWithoutExtension(_path);
-        string extension = Path.GetExtension(_path);
-
-        string testPath = directory + filename + "_test" + extension;
-        Debug.Log("testpath: " + testPath);
-        return testPath;
-    }
-
     public bool PullFilesFromPacket(PooledBitReader reader)
     {
         bool packetEndHit = false;
@@ -710,7 +699,7 @@ public class LargeRPC : IDisposable
                     receptionFileStream.Dispose();
                 }
 
-                string filePath = testPath(Headers[id].path);
+                string filePath = Paths.GetDownloadPath(Headers[id]);
 
                 receptionFileStream = File.Open(filePath, FileMode.Append);
                 receptionFileStreamWriter = new BinaryWriter(receptionFileStream);
