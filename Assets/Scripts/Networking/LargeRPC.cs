@@ -177,6 +177,7 @@ public class LargeRPC : IDisposable
     /// </summary>
     public IEnumerator SendFilesDownloadRoutine(string[] _paths, ulong _clientID)
     {
+
         Debug.Log("coroutine started");
         if (State != LargeRPCState.Idle)
         {
@@ -215,7 +216,7 @@ public class LargeRPC : IDisposable
                     byte[] fileHash = fs.sha256();
                     yield return new WaitForEndOfFrame();
 
-                    FileHeader header = new FileHeader(id, path, fileHash, fs.Length);
+                    FileHeader header = new FileHeader(id, Path.GetFileName(path), fileHash, fs.Length);
                     Headers.Add(header);
 
                     DownloadSize += header.fileSize;
