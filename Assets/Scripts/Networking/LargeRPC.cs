@@ -732,6 +732,25 @@ public class LargeRPC : IDisposable
         foreach (var header in Headers)
         {
             i++;
+
+            string dlFilePath = Paths.GetDownloadPath(header);
+
+            if (File.Exists(dlFilePath))
+            {
+                using (FileStream fs = File.Open(dlFilePath, FileMode.Open))
+                {
+                    byte[] fileHash = fs.sha256();
+
+                    if (fileHash != header.hash)
+                    {
+                        fileIDs.Add(header.id);
+                    }
+                }
+            }
+            else
+            {
+                fileIDs.Add(header.id);
+            }
             // TODO: use header.hash to figure out if we need each file. This allows us to dump a ton of downloaded files together (maybe separating by lua, model, material, for convenience) and get them no matter
 
             // we're just adding all of them without question for now (except test files)
