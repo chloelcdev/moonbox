@@ -36,6 +36,8 @@ public class LobbyManager : MonoBehaviour
 
     public TMP_InputField playerNameField;
 
+    [HideInInspector] public Addon SelectedGamemode { get; private set; } = null;
+
     void Start()
     {
         Instance = this;
@@ -213,7 +215,7 @@ public class LobbyManager : MonoBehaviour
     }
 
     Dictionary<ulong, LargeRPC> inProgressDownloads = new Dictionary<ulong, LargeRPC>();
-    
+
 
     void DownloadRequestReceived(ulong _requesterClientID, Stream _data)
     {
@@ -226,7 +228,7 @@ public class LobbyManager : MonoBehaviour
             clientDownload.OnDownloadComplete += ClientFinishedDownload;
 
             // TODO: Actually send files
-            clientDownload.SendFolder(@"C:\Users\Richard\Pictures\moonbox_files_testing", _requesterClientID);
+            clientDownload.SendFolder(Paths.GetGamemodeFilesPath(SelectedGamemode), _requesterClientID);
         }
         else
         {
@@ -408,6 +410,10 @@ public class LobbyManager : MonoBehaviour
 
     }
 
+    public void SetSelectedGamemode(Addon _selectedGamemode)
+    {
+        SelectedGamemode = _selectedGamemode;
+    }
 }
 
 [Serializable]

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -9,7 +10,8 @@ public class Addon
     public string Type;
     public string Name;
     public Sprite Icon;
-    public string Path;
+    public string AbsolutePath;
+    public string RelativePath;
     public string Version;
 
 
@@ -23,11 +25,11 @@ public class Addon
 
     public static void GatherAddons()
     {
-        foreach (string addonTypeDirectoryPath in Directory.GetDirectories(Application.dataPath + "/game/addons/"))
+        foreach (string thisAddonTypeDir in Directory.GetDirectories(Paths.AddonPath))
         {
-            foreach (string addonDirectoryPath in Directory.GetDirectories(addonTypeDirectoryPath))
+            foreach (string thisAddonDir in Directory.GetDirectories(thisAddonTypeDir))
             {
-                string infoFilePath = addonDirectoryPath + @"\info.txt";
+                string infoFilePath = Paths.GetInfoFilePath(thisAddonDir);
 
                 Addon addon = ParseInfoFile(infoFilePath);
                 if (addon != null) RegisterAddon(addon);
@@ -44,7 +46,8 @@ public class Addon
         Addon newAddon = new Addon();
         string contents = File.ReadAllText(_infoFilePath);
 
-        newAddon.Path = Directory.GetParent(_infoFilePath).FullName;
+        newAddon.AbsolutePath = Directory.GetParent(_infoFilePath).FullName;
+        newAddon.AbsolutePath = Directory.GetParent(_infoFilePath).Name;
 
         contents = contents.Replace("\n", "");
         contents = contents.Replace("\r", "");
@@ -74,7 +77,7 @@ public class Addon
             }
         }
 
-        string iconPath = newAddon.Path + @"\icon.png";
+        string iconPath = newAddon.AbsolutePath + @"\icon.png";
         Debug.Log(iconPath);
         if (File.Exists(iconPath))
         {
