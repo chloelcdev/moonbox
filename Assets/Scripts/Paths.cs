@@ -21,4 +21,9 @@ public static class Paths
         return Path.Combine(AddonPath, _gamemode.RelativePath);
     }
 
+    public static string GetCurrentGamemodeFilesPath()
+    {
+        return Path.Combine(AddonPath, LobbyManager.Instance.SelectedGamemode.RelativePath);
+    }
+
 }

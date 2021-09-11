@@ -25,6 +25,8 @@ public class GamemodeSelector : MonoBehaviour
     {
         Addon.GatherAddons();
         Refresh(Addon.Addons);
+
+        dropdown.onValueChanged.AddListener((value) => LobbyManager.Instance.SetSelectedGamemode(selectedGamemode));
     }
 
     void Refresh(List<Addon> _addons)
