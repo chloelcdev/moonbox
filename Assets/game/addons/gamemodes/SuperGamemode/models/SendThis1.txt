@@ -1,0 +1,6 @@
+This is a long string of characters
+it should be consistent
+it should be readable on the other side
+no characters should be missing, or out of place
+all of this should make it across the network okay
+then I consider it working.
